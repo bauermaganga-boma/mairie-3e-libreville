@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="only light">
+<meta name="theme-color" content="#06363f">
+<title>Notre arrondissement – Mairie du 3e arrondissement de Libreville</title>
+<meta name="description" content="Le 3e arrondissement de Libreville : quartiers (Mont-Bouët, Petit-Paris, Akébé, Sorbonne, Nombakélé-Nord), équipements, schéma des quartiers, actions datées et sourcées.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Mairie du 3e arrondissement de Libreville">
+<meta property="og:title" content="Notre arrondissement – Mairie du 3e arrondissement de Libreville">
+<meta property="og:description" content="Quartiers, équipements, schéma et actions récentes du 3e arrondissement de Libreville.">
+<meta property="og:image" content="assets/img/marche.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="assets/img/logo-3e.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="assets/img/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="arrondissement">
+<div class="flagbar"></div>
+<div id="site-header"></div>
+
+<section class="page-hero">
+  <img class="bg" src="assets/img/marche.jpg" alt="" style="object-position:center 45%">
+  <div class="wrap">
+    <p class="crumbs"><a href="index.html">Accueil</a> › Notre arrondissement</p>
+    <span class="eyebrow">3e arrondissement de Libreville</span>
+    <h1>Mont-Bouët, Petit-Paris, Akébé : notre arrondissement</h1>
+    <p>Le 3e arrondissement abrite le grand marché de Mont-Bouët, principal marché de la capitale, ainsi que les quartiers de Petit-Paris et d'Akébé. Il est dirigé par le maire Franck Ibouili, installé le 19 novembre 2025, et reçoit en 2026 une dotation d'environ 230 millions FCFA.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head"><div><span class="eyebrow rv">Votre mairie</span><h2 class="rv d1">Le maire, les adjoints et les coordonnées</h2></div><p class="rv d2">Placée sous la coordination de la mairie centrale de Libreville, la mairie du 3e assure l'état civil, la salubrité et le lien avec les chefs de quartier.</p></div>
+    <div class="arr-id" id="arr-id"></div>
+  </div>
+</section>
+
+<section class="bg-white">
+  <div class="wrap mapbox">
+    <div class="rv"><div id="lbvmap"></div><p class="mapnote">Schéma des quartiers, sans valeur cartographique : touchez un quartier pour l'afficher. Contour hachuré : rattachement à confirmer. M = marché, + = santé.</p></div>
+    <div class="finder rv d1" id="finder">
+      <span class="eyebrow">Trouver mon quartier</span>
+      <h3>Dans quel quartier j'habite ?</h3>
+      <p>Tapez le nom de votre quartier : le site vous indique s'il figure dans le 3e arrondissement.</p>
+      <div class="srch"><input type="search" placeholder="Ex. Akébé, Mont-Bouët, PK8, Peyrie…" aria-label="Votre quartier" autocomplete="off"></div>
+      <div class="res" aria-live="polite"></div>
+      <div class="chips"></div>
+    </div>
+  </div>
+</section>
+
+<section id="focus-sec">
+  <div class="wrap">
+    <div class="sec-head"><div><span class="eyebrow rv">Les quartiers</span><h2 class="rv d1">Cinq quartiers, une mairie</h2></div><p class="rv d2">Aucune liste officielle n'est publiée : celle-ci recoupe la presse et la liste électorale de 2018. Elle sera validée avec la mairie.</p></div>
+    <div class="tabs tabs-sm" id="q-tabs"></div>
+    <div id="q-focus"></div>
+    <p class="imgnote" style="margin-top:1.4rem">Sources : presse gabonaise citée sous chaque fiche, Wikipédia, liste électorale de L'Union (2018). Photos d'illustration, sauf mention contraire (Wikimedia Commons, CC BY-SA 4.0 ; Gabonclic). Les photos réelles de la mairie sont à fournir.</p>
+  </div>
+</section>
+
+<section class="bg-white">
+  <div class="wrap">
+    <div class="sec-head"><div><span class="eyebrow rv">Équipements & sites</span><h2 class="rv d1">Marchés, santé, écoles : ce que dit la presse</h2></div><p class="rv d2">Les éléments « à confirmer » n'ont pas été vérifiés auprès de la mairie. Aucun équipement sportif du 3e n'a été identifié à ce jour.</p></div>
+    <div class="eq-grid" id="equip-grid"></div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap split" style="align-items:start">
+    <div>
+      <span class="eyebrow rv">Services de la mairie</span>
+      <h2 class="rv d1" style="font-size:clamp(1.7rem,3.2vw,2.4rem);color:var(--navy);margin:.6rem 0 1rem">Ce que fait la mairie du 3e</h2>
+      <p class="lead-p rv d2">Missions générales d'une mairie d'arrondissement ; la liste officielle des services et les tarifs du 3e ne sont pas encore publiés <span class="chip warn conf">à confirmer</span></p>
+      <ul class="checks rv d2" id="services-3e"></ul>
+      <div style="display:flex;gap:.6rem;flex-wrap:wrap" class="rv d3"><a class="btn btn-orange" href="demarches.html#demande">Démarches en ligne</a><a class="btn btn-line" href="demarches.html?d=rdv#demande">Prendre rendez-vous</a></div>
+      <div id="info-timbres" style="margin-top:1.6rem"></div>
+    </div>
+    <div>
+      <span class="eyebrow rv">Repérer sur la carte</span>
+      <iframe class="map rv d2" title="Carte de la zone de Mont-Bouët à Akébé, Libreville" loading="lazy" style="height:380px" src="https://www.openstreetmap.org/export/embed.html?bbox=9.43%2C0.37%2C9.50%2C0.43&amp;layer=mapnik"></iframe>
+      <p class="imgnote" style="margin-top:.5rem">Fond de carte OpenStreetMap, zone indicative : les limites exactes de l'arrondissement sont à fournir par la mairie.</p>
+    </div>
+  </div>
+</section>
+
+<section class="bg-white">
+  <div class="wrap">
+    <div class="sec-head"><div><span class="eyebrow rv">Actions récentes</span><h2 class="rv d1">Ce qui s'est passé dans le 3e</h2></div><p class="rv d2">Chaque fait est daté et renvoie à sa source de presse.</p></div>
+    <div class="timeline" id="actions-tl"></div>
+  </div>
+</section>
+
+<section style="padding-top:0">
+  <div class="wrap">
+    <div class="band rv">
+      <div><span class="eyebrow">Un problème dans votre quartier ?</span><h2>Signalez-le à la mairie du 3e</h2><p>Ordures, caniveau bouché, éclairage en panne : décrivez le lieu, joignez une photo et suivez l'intervention.</p></div>
+      <a class="btn btn-orange" href="demarches.html?d=signalement#demande">Signaler un problème</a>
+    </div>
+  </div>
+</section>
+
+<div id="site-footer"></div>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/store.js"></script>
+<script src="assets/js/main.js"></script>
+</body>
+</html>

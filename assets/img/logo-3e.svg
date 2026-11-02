@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 140" role="img" aria-label="Emblème de la Mairie du 3e arrondissement de Libreville">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0a5260"/><stop offset="1" stop-color="#06363f"/></linearGradient>
+    <clipPath id="sh"><path d="M14 34h92v46c0 30-22 46-46 54C36 126 14 110 14 80z"/></clipPath>
+  </defs>
+  <!-- couronne murale -->
+  <path d="M30 30V14l7 5 7-9 8 8 8-12 8 12 8-8 7 9 7-5v16z" fill="#f5b301" stroke="#b37f00" stroke-width="1.5" stroke-linejoin="round"/>
+  <rect x="30" y="26" width="60" height="6" rx="1.5" fill="#d99a00"/>
+  <!-- écu -->
+  <path d="M14 34h92v46c0 30-22 46-46 54C36 126 14 110 14 80z" fill="url(#sky)"/>
+  <g clip-path="url(#sh)">
+    <g stroke="#f5b301" stroke-width="2.6" stroke-linecap="round" opacity=".85">
+      <path d="M60 41v-4M33 47l-3-3M87 47l3-3"/>
+    </g>
+    <path d="M10 104c9-6 16-6 25 0s16 6 25 0 16-6 25 0 16 6 25 0v60H10z" fill="#18a7b5"/>
+    <path d="M10 114c9-6 16-6 25 0s16 6 25 0 16-6 25 0 16 6 25 0v60H10z" fill="#ffffff"/>
+    <path d="M10 124c9-6 16-6 25 0s16 6 25 0 16-6 25 0 16 6 25 0v60H10z" fill="#0e7c86"/>
+  </g>
+  <!-- chiffre 3 -->
+  <path d="M42 53c0-10 11-13 18-13s18 3 18 13c0 8-8 12-16 12 9 0 18 3 18 14 0 11-11 14-20 14s-20-3-20-14" fill="none" stroke="#f5b301" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" transform="translate(0 -2)"/>
+  <path d="M14 34h92v46c0 30-22 46-46 54C36 126 14 110 14 80z" fill="none" stroke="#f5b301" stroke-width="3"/>
+</svg>
