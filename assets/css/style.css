@@ -444,7 +444,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:.88rem;min-width:640px}
 .bubble{max-width:78%;padding:.7rem 1rem;border-radius:16px;font-size:.9rem;background:#fff;border:1px solid var(--line);align-self:flex-start}
 .bubble.me{align-self:flex-end;background:var(--navy);color:#fff;border-color:var(--navy)}
 .bubble small{display:block;font-size:.7rem;opacity:.65;margin-top:.25rem}
-.chat form{display:flex;gap:.6rem;padding:.8rem;border-top:1px solid var(--line)}
+.chat form{display:flex;gap:.6rem;padding:.8rem}
 .chat form input{flex:1;padding:.75rem 1rem;border:1.5px solid var(--line);border-radius:99px;outline:none}
 .empty{padding:2.5rem 1rem;text-align:center;color:var(--muted)}
 .empty svg{width:44px;height:44px;margin:0 auto .6rem;color:#c3cfe0}
@@ -1286,3 +1286,141 @@ body.ov-open .wa,body.ov-open .totop,body.nav-open .wa,body.nav-open .totop{disp
 .hero-maire b{display:block;font-family:var(--font-h);font-size:1.05rem;line-height:1.1}
 .hero-maire em{display:block;font-style:normal;font-size:.8rem;color:var(--gold)}
 .maire-sec{padding-bottom:3rem}
+
+/* =========================================================
+   v5 · Finitions design & mobile (mairie du 3e)
+   ========================================================= */
+:root{--shadow-sm:0 2px 10px -4px rgba(6,54,63,.18);--ease:cubic-bezier(.2,.7,.2,1)}
+body{font-size:1rem;text-rendering:optimizeLegibility}
+h1,h2,h3{text-wrap:balance}
+p{text-wrap:pretty}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px;border-radius:6px}
+.btn:focus-visible,.tab:focus-visible{outline-color:var(--navy)}
+::selection{background:var(--gold);color:#3d2c00}
+
+/* Bandeau tricolore plus net, sous la barre du haut */
+.flagbar{height:6px;position:relative;z-index:60}
+
+/* Boutons : profondeur douce */
+.btn{transition:transform .25s var(--ease),box-shadow .25s,background .2s,color .2s,border-color .2s;min-height:44px;justify-content:center}
+.btn:active{transform:translateY(0) scale(.98)}
+.btn-navy{box-shadow:0 10px 22px -12px rgba(6,54,63,.7)}
+.btn-line:hover{box-shadow:var(--shadow-sm)}
+
+/* Cartes : ombre douce, coins, hover */
+.ncard,.card,.do,.eqc,.arr-mini{border-radius:20px;box-shadow:var(--shadow-sm);transition:transform .3s var(--ease),box-shadow .3s,border-color .3s}
+.do:hover,.eqc:hover,.arr-mini:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:#c9dde0}
+.do:focus-visible,.ncard a:focus-visible{outline-offset:3px}
+.card{box-shadow:var(--shadow-sm)}
+
+/* Titres de section : filet or/orange */
+.sec-head h2{position:relative}
+.sec-head>div>.eyebrow{margin-bottom:.1rem}
+.sec-head{margin-bottom:2.4rem}
+
+/* Rythme alterné des sections */
+section.bg-white{background:linear-gradient(180deg,#fff,#fbfdfe)}
+.maire-sec{background:#fff;padding-top:4rem!important;padding-bottom:6.5rem}
+.do-sec{margin-top:-3.6rem}
+.do-sec .center h2{margin-bottom:.4rem}
+
+/* Hero accueil plus premium */
+.hero{min-height:min(92vh,860px)}
+.hero h1{letter-spacing:-.025em}
+.hero .lead{max-width:56ch;text-shadow:0 1px 14px rgba(3,30,36,.5)}
+.hero .slogan{display:flex;width:100%;margin:1.1rem 0 .2rem}
+.hero-maire{margin:1rem 0 1.2rem;padding:.5rem 1.4rem .5rem .5rem;background:linear-gradient(135deg,rgba(6,54,63,.78),rgba(10,82,96,.6));border:1px solid rgba(245,179,1,.55);box-shadow:0 14px 34px -14px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.18);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.hero-maire .mono{width:52px;height:52px;box-shadow:0 0 0 3px rgba(245,179,1,.35)}
+.hero-maire b{font-size:1.12rem}
+.hero-maire small{color:var(--gold);font-weight:700}
+.hero-maire em{color:#dff3f4}
+.hero-maire::after{content:"→";color:var(--gold);font-weight:800;margin-left:.3rem;transition:transform .25s}
+.hero-maire:hover::after{transform:translateX(4px)}
+.hero-dots{bottom:2.2rem}
+
+/* Chiffres clés */
+.stats .grid{background:linear-gradient(135deg,var(--navy),var(--navy-2));border-top:3px solid var(--gold)}
+.stat b{font-size:2.3rem;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:#fff}
+.stat span{font-size:.86rem;line-height:1.4}
+
+/* En-têtes de pages intérieures */
+.page-hero{padding:6rem 0 5rem}
+.page-hero h1{max-width:20ch;text-shadow:0 2px 20px rgba(3,30,36,.4)}
+.page-hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:5px;background:linear-gradient(90deg,#0a8a55 0 33.3%,#f2c230 33.3% 66.6%,#1477b5 66.6%);opacity:.9}
+.page-hero + section,.page-hero + .wrap{padding-top:3rem}
+.crumbs a:hover{text-decoration:underline}
+
+/* Onglets / filtres */
+.tab{min-height:44px;display:inline-flex;align-items:center;gap:.4rem}
+.tab:hover{border-color:var(--blue);color:var(--blue)}
+.tabs{gap:.6rem}
+
+/* Formulaires : lisibilité */
+.field label{font-size:.9rem;margin-bottom:.4rem}
+.field input,.field select,.field textarea{padding:.85rem 1rem;min-height:48px;border-radius:14px;border-color:#cfd9e6}
+.field input:hover,.field select:hover,.field textarea:hover{border-color:#9fb6c9}
+.field input::placeholder,.field textarea::placeholder{color:#8493a8}
+.form .row{gap:1rem}
+
+/* Pied de page */
+.footer{background:linear-gradient(180deg,#032a31,#021f25);border-top:5px solid transparent;border-image:linear-gradient(90deg,#0a8a55 0 33.3%,#f2c230 33.3% 66.6%,#1477b5 66.6%) 1}
+.footer h4{font-size:.82rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.footer li a{display:inline-flex;align-items:center;gap:.4rem;padding:.15rem 0}
+.footer li a svg,.footer li svg{width:14px!important;height:14px!important;flex:none}
+.footer .socials a{width:44px;height:44px}
+.footer .staff-box{border-radius:18px}
+
+/* Micro-animations d'apparition sobres */
+.rv{transition:opacity .7s var(--ease),transform .7s var(--ease)}
+
+/* ---------- Tablette ---------- */
+@media (max-width:1020px){
+  section{padding:4.2rem 0}
+  .maire-sec{padding-bottom:5.5rem}
+  .page-hero{padding:4.5rem 0 3.5rem}
+}
+
+/* ---------- Mobile ---------- */
+@media (max-width:640px){
+  body{font-size:1rem}
+  .field input,.field select,.field textarea,input,select,textarea{font-size:16px!important}
+  .btn{min-height:48px;padding:.85rem 1.2rem}
+  .btn-sm{min-height:44px}
+  .hero{min-height:auto}
+  .hero .wrap{padding:3.2rem 0 7.5rem!important}
+  .hero h1{font-size:clamp(2.1rem,9.4vw,2.7rem)}
+  .hero .cta{display:grid;gap:.6rem}
+  .hero .cta .btn{width:100%}
+  .hero .slogan{font-size:.82rem}
+  .hero-maire{display:flex;width:100%;margin:.8rem 0}
+  .hero-maire::after{margin-left:auto}
+  .maire-sec{padding-top:2.6rem!important;padding-bottom:4.8rem}
+  .do-sec{margin-top:-2.6rem}
+  .page-hero{padding:3.4rem 0 2.8rem}
+  .page-hero h1{font-size:clamp(1.8rem,8vw,2.3rem);max-width:none}
+  .page-hero + section,.page-hero + .wrap{padding-top:2rem}
+  /* Filtres et onglets : défilement horizontal tactile, pas de débordement de page */
+  .tabs{flex-wrap:nowrap;overflow-x:auto;margin-inline:-16px;padding:2px 16px 10px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tabs .tab{flex:none;scroll-snap-align:start}
+  .tabs.stack{flex-wrap:wrap;overflow:visible;margin:0;padding:0}
+  .stat b{font-size:1.5rem}
+  .footer .socials a{width:48px;height:48px}
+  .footer li a{padding:.3rem 0;min-height:36px}
+  .nav a{min-height:48px;display:flex;align-items:center;font-size:1.02rem}
+  .tabbar a{min-height:56px}
+}
+@media (max-width:640px){
+  body.nav-open .nav{inset:68px 0 0 0;max-height:none}
+}
+@media (max-width:360px){
+  .hero h1{font-size:2rem}
+  .stats .grid{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .hero-slides figure.on img{animation:none;transform:none}
+  .do:hover,.ncard:hover,.eqc:hover,.arr-mini:hover{transform:none}
+}
+.page-hero .crumbs{margin-bottom:1rem}
+@media (min-width:1021px){.header .wrap{justify-content:flex-start}.header .nav{margin-left:auto}}

@@ -21,8 +21,8 @@ const P = (() => {
   const SVC_LBL = {};
   const stChip = s => { const c = {"Valide":"ok","Expirée":"bad","Reçu":"ok","Attendu":"info","Absent":"neu","En service":"ok","Engagé":"info","Nouvelle":"bad","Nouveau":"bad","En traitement":"info","Pris en charge":"info","En intervention":"info","Pièce manquante":"warn","Prête":"ok","Remise":"neu","Résolu":"ok","Rejetée":"neu","En cours":"info","Programmé":"warn","Réalisé":"ok","À l'étude":"neu","Suspendu":"bad","Lancé":"info"}[s] || "neu"; return `<span class="chip ${c}">${esc(s)}</span>`; };
   async function act(fn, okMsg) { try { const r = await fn(); if (okMsg) toast(okMsg, "ok"); return r ?? true; } catch (e) { toast(e.message || "Une erreur est survenue.", "err"); return false; } }
-  const kpis = list => `<div class="kpis">${list.map(([ic, cls, v, l]) => `<div class="kpi"><span class="ic ${cls}">${ICONS[ic]}</span><span><b>${v}</b><span>${l}</span></span></div>`).join("")}</div>`;
-  const tbl = (head, rows, emptyMsg = "Aucun élément") => rows.length ? `<div class="tbl-wrap"><table class="tbl cards"><thead><tr>${head.map(h => `<th scope="col">${h}</th>`).join("")}</tr></thead><tbody>${rows.map(r => { let i = 0; return r.replace(/<td(?=[ >])/g, () => { const l = head[i++]; return l ? `<td data-l="${esc(l)}"` : "<td"; }).replace('<tr class="clk"', '<tr class="clk" tabindex="0"'); }).join("")}</tbody></table></div>` : empty(emptyMsg);
+  const kpis = list => `<div class="kpis">${list.map(([ic, cls, v, l, h]) => `<${h ? `a href="${h}"` : "div"} class="kpi${h ? " lnk" : ""}"><span class="ic ${cls}">${ICONS[ic]}</span><span><b>${v}</b><span>${l}</span></span></${h ? "a" : "div"}>`).join("")}</div>`;
+  const tbl = (head, rows, emptyMsg = "Aucun élément", extra = "") => rows.length ? `<div class="tbl-wrap"><table class="tbl rc"><thead><tr>${head.map(h => `<th scope="col">${h}</th>`).join("")}</tr></thead><tbody>${rows.map(r => { let i = 0; return r.replace(/<td(?=[ >])/g, () => { const l = head[i++]; return l ? `<td data-l="${esc(l)}"` : "<td"; }).replace('<tr class="clk"', '<tr class="clk" tabindex="0"'); }).join("")}</tbody></table></div>` : empty(emptyMsg) + extra;
   const dotCard = ch => {
     const eng = ch.reduce((s, c) => s + (+c.engage || 0), 0), pct = Math.min(100, Math.round(eng / DOTATION * 100));
     return `<div class="card dot"><h2>Dotation 2026 de la mairie <a class="btn btn-line btn-sm" href="#chantiers">Voir les chantiers</a></h2><div class="dot-top"><b>${mshort(eng)} FCFA</b><span>engagés sur ${DOT_M} FCFA</span><em>${pct} %</em></div><div class="prog dotbar" role="progressbar" aria-label="Dotation engagée" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></div><small>Reste ${mshort(Math.max(0, DOTATION - eng))} FCFA disponibles · ${ch.filter(c => c.statut === "En cours").length} chantier(s) en cours · ${ch.filter(c => c.statut === "Réalisé").length} réalisé(s)</small></div>`;
@@ -57,7 +57,26 @@ const P = (() => {
     w.document.write(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>${esc(title)}</title><link rel="stylesheet" href="assets/css/style.css"><style>body{background:#fff;padding:2rem}</style></head><body>${html}<script>setTimeout(()=>print(),400)<\/script></body></html>`);
     w.document.close();
   }
-  const filterBar = (fields, onChange, root) => { root.querySelectorAll("[data-f]").forEach(i => i.addEventListener(i.tagName === "INPUT" ? "input" : "change", onChange)); };
+  /* Erreur de formulaire : message visible en haut du formulaire + champ mis en évidence + focus */
+  function bad(fm, msg, name) {
+    let b = fm.querySelector(".form-err"); if (!b) { b = document.createElement("div"); b.className = "form-err"; b.setAttribute("role", "alert"); fm.prepend(b); }
+    b.textContent = msg; b.classList.add("on");
+    const f = name && fm.elements[name]; if (f) { f.classList.add("bad"); f.focus(); f.addEventListener("input", () => { f.classList.remove("bad"); b.classList.remove("on"); }, {once:true}); }
+    b.scrollIntoView({block:"nearest"}); return false;
+  }
+  const TEL_RE = /^\+?[0-9 .-]{8,18}$/;
+  const filterBar = (fields, onChange, root) => root.querySelectorAll("[data-f]").forEach(i => i.addEventListener(i.tagName === "INPUT" ? "input" : "change", e => {
+    const k = e.target.dataset.f, pos = e.target.selectionStart, txt = e.target.tagName === "INPUT";
+    onChange(e); saveF();
+    if (txt) { const n = document.querySelector('#views [data-f="' + k + '"]'); if (n && n !== e.target) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) {} } }
+  }));
+  /* Filtres mémorisés (par compte, dans ce navigateur) */
+  const fKey = () => "l3e-bo-filtres-" + (me ? me.login : "");
+  const saveF = () => { try { const o = {...F}; delete o.rdv; localStorage.setItem(fKey(), JSON.stringify(o)); } catch (e) {} };
+  const loadF = () => { try { Object.assign(F, JSON.parse(localStorage.getItem(fKey()) || "{}")); } catch (e) {} };
+  const resetBtn = k => '<p style="text-align:center"><button type="button" class="btn btn-line btn-sm" data-reset="' + k + '">Réinitialiser les filtres</button></p>';
+  const today = () => new Date().toISOString().slice(0, 10);
+  const isToday = d => new Date(d).toDateString() === new Date().toDateString();
 
   let me, NAV, VIEWS, cur, route;
   const charts = [];
@@ -69,7 +88,7 @@ const P = (() => {
     let u = null;
     try { u = await Store.init(); } catch (e) { views.innerHTML = empty("Connexion à la base impossible. Vérifiez votre connexion internet puis rechargez la page."); return; }
     if (!u) { location.replace("espace.html"); return; }
-    me = u;
+    me = u; loadF();
     const n = document.querySelector(".notice");
     if (n) n.textContent = Store.LIVE ? "Connecté à la base de données de la mairie — les modifications sont partagées en temps réel avec tous les services." : "Mode démonstration : les données (personnes, montants, dossiers) sont fictives et enregistrées dans ce navigateur. En production, la même interface est branchée sur une base de données sécurisée partagée par tous les services.";
     start();
@@ -96,6 +115,8 @@ const P = (() => {
       document.getElementById("sbback").onclick = () => closeSb();
       const vb = document.getElementById("vback"); if (vb) vb.hidden = cur === NAV[0].id;
       drawBnav();
+      const tot = NAV.reduce((a, n) => a + (n.badge ? n.badge() : 0), 0), cn = NAV.find(n => n.id === cur) || NAV[0];
+      document.title = (tot ? "(" + tot + ") " : "") + cn.l + " – Mairie du 3e arrondissement";
     };
     P.redrawNav = draw;
     document.getElementById("who").innerHTML = `<span class="av">${ini(me)}</span><span><b>${esc(me.prenom + " " + me.nom)}</b><small>${esc(me.titre || Store.ROLES[me.role].l)}</small></span>`;
@@ -163,44 +184,66 @@ const P = (() => {
     VIEWS = {
       /* ---------------- Tableau de bord ---------------- */
       tableau(el) {
-        const dem = L("demandes"), sig = L("signalements"), rec = L("recettes"), ch = L("chantiers");
+        const dem = L("demandes"), sig = L("signalements"), rec = L("recettes"), ch = L("chantiers"), r = me.role, full = Store.ROLES[r].mods === "*";
         const late = dem.filter(d => open(d.statut) && days(d.date) > 7), hot = sig.filter(s => s.priorite === "Haute" && s.statut !== "Résolu");
-        const recM = rec.filter(r => days(r.date) <= 30).reduce((a, r) => a + r.montant, 0);
-        const chC = ch.filter(c => c.statut === "En cours");
-        const k = [];
-        if (Store.can("demandes")) k.push(["inbox","ic-b", dem.filter(d => open(d.statut)).length, "demandes en cours"]);
-        if (Store.can("signalements")) k.push(["alert","ic-o", sig.filter(s => s.statut !== "Résolu").length, "signalements ouverts"]);
-        if (Store.can("recettes")) k.push(["wallet","ic-g", mshort(recM), "FCFA encaissés sur 30 jours"]);
-        if (Store.can("vignettes") && me.role === "finances") { const vg = L("vignettes"), td = new Date().toISOString().slice(0, 10); k.push(["qr","ic-b", vg.filter(v => v.fin >= td && v.statut === "Active").length, "vignettes valides"]); }
-        if (Store.can("recettes")) { const r30 = rec.filter(r => days(r.date) <= 30), t30 = r30.reduce((a, r) => a + r.montant, 0); k.push(["phone","ic-o", t30 ? Math.round(r30.filter(r => Store.ONLINE_RE.test(r.mode)).reduce((a, r) => a + r.montant, 0) / t30 * 100) + " %" : "—", "des recettes payées en ligne (30 j)"]); }
-        if (Store.can("chantiers")) k.push(["crane","ic-y", chC.length, "chantiers en cours"]);
-        if (Store.can("actes") && k.length < 4) k.push(["book","ic-b", L("actes").length, "actes au registre numérique"]);
-        if (Store.can("agents")) { const a = L("agents"), inc = a.filter(x => Object.values(x.pieces).some(v => !v)).length; k.push(["users","ic-b", a.length, "agents suivis"], ["file","ic-o", a.length ? Math.round(inc / a.length * 100) + " %" : "—", "dossiers incomplets"]); }
+        const chC = ch.filter(c => c.statut === "En cours"), td = today();
+        const recM = rec.filter(x => days(x.date) <= 30).reduce((a, x) => a + x.montant, 0), recJ = rec.filter(x => isToday(x.date)).reduce((a, x) => a + x.montant, 0);
+        const onl = (() => { const r30 = rec.filter(x => days(x.date) <= 30), t30 = r30.reduce((a, x) => a + x.montant, 0); return t30 ? Math.round(r30.filter(x => Store.ONLINE_RE.test(x.mode)).reduce((a, x) => a + x.montant, 0) / t30 * 100) + " %" : "—"; })();
+        const nDem = dem.filter(d => d.statut === "Nouvelle" && d.type !== "rdv"), nSig = sig.filter(s => s.statut === "Nouveau");
+        const rdvJ = dem.filter(d => d.type === "rdv" && d.rdv && d.rdv.jour === td).sort((a, b) => a.rdv.heure.localeCompare(b.rdv.heure));
+        const vigExp = Store.can("vignettes") ? L("vignettes").filter(v => v.statut === "Active" && v.fin < td) : [];
+        const ag = Store.can("agents") ? L("agents") : [], incAg = ag.filter(x => Object.values(x.pieces).some(v => !v));
+        let k = [], lead = "";
+        if (r === "etatcivil") { k = [["inbox","ic-o", dem.filter(d => isToday(d.date)).length, "demandes reçues aujourd'hui", "#demandes"],["clock","ic-b", nDem.length, "nouvelles demandes à traiter", "#demandes"],["ticket","ic-y", rdvJ.length, "rendez-vous au guichet aujourd'hui", "#rendezvous"],["shieldok","ic-g", L("authentifications").filter(a => a.statut === "En attente").length, "originaux à vérifier", "#authentifications"]]; lead = "Vos demandes du jour"; }
+        else if (r === "technique") { k = [["alert","ic-o", nSig.length, "nouveaux signalements", "#signalements"],["alert","ic-o", hot.length, "prioritaires non résolus", "#signalements"],["crane","ic-b", sig.filter(s => /Pris en charge|En intervention/.test(s.statut)).length, "en cours de traitement", "#signalements"],["crane","ic-y", chC.length, "chantiers en cours", "#chantiers"]]; lead = "Vos signalements à traiter"; }
+        else if (r === "finances") { k = [["wallet","ic-g", mshort(recJ), "FCFA encaissés aujourd'hui", "#recettes"],["chart","ic-b", mshort(recM), "FCFA sur 30 jours", "#recettes"],["phone","ic-o", onl, "payés en ligne (30 j)", "#indicateurs"],["qr","ic-y", vigExp.length, "vignettes expirées à renouveler", "#vignettes"]]; lead = "Vos encaissements du jour"; }
+        else if (r === "rh") { k = [["users","ic-b", ag.length, "agents suivis", "#agents"],["check","ic-g", ag.length - incAg.length, "dossiers complets", "#agents"],["file","ic-o", incAg.length, "dossiers incomplets", "#agents"],["gauge","ic-y", ag.length ? Math.round((ag.length - incAg.length) / ag.length * 100) + " %" : "—", "taux de complétude", "#agents"]]; lead = "Vos dossiers du personnel"; }
+        else { k = [["inbox","ic-b", dem.filter(d => open(d.statut)).length, "demandes en cours", "#demandes"],["alert","ic-o", sig.filter(s => s.statut !== "Résolu").length, "signalements ouverts", "#signalements"],["wallet","ic-g", mshort(recM), "FCFA encaissés sur 30 jours", "#recettes"],["crane","ic-y", chC.length, "chantiers en cours", "#chantiers"]]; lead = "Vue d'ensemble de la mairie"; }
         const alerts = [];
-        if (Store.can("stocks")) lowStocks().forEach(s => alerts.push(["bad", `Stock bas : <b>${esc(s.article)}</b> — ${s.qte} ${esc(s.unite)}(s) restant(s), seuil ${s.seuil}.`]));
-        if (Store.can("demandes") && late.length) alerts.push(["warn", `<b>${late.length} demande(s)</b> en attente depuis plus de 7 jours.`]);
-        if (Store.can("signalements") && hot.length) alerts.push(["warn", `<b>${hot.length} signalement(s) prioritaire(s)</b> non résolu(s) (caniveaux, eau).`]);
+        if (Store.can("stocks")) lowStocks().forEach(s => alerts.push(["bad", `Stock bas : <b>${esc(s.article)}</b> — ${s.qte} ${esc(s.unite)}(s) restant(s), seuil ${s.seuil}.`, "#stocks"]));
+        if (Store.can("demandes") && late.length) alerts.push(["warn", `<b>${late.length} demande(s)</b> en attente depuis plus de 7 jours.`, "#demandes"]);
+        if (Store.can("signalements") && hot.length) alerts.push(["warn", `<b>${hot.length} signalement(s) prioritaire(s)</b> non résolu(s) (caniveaux, eau).`, "#signalements"]);
+        if (vigExp.length) alerts.push(["warn", `<b>${vigExp.length} vignette(s)</b> expirée(s) à renouveler.`, "#vignettes"]);
+        if (incAg.length) alerts.push(["warn", `<b>${incAg.length} dossier(s) du personnel</b> avec des pièces manquantes.`, "#agents"]);
         const off = new Date().getDate() <= 7 ? 1 : 0, months = [...Array(6)].map((_, i) => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 5 + i - off); return d; });
-        const recByM = months.map(m => [m.toLocaleDateString("fr-FR", {month:"short"}), rec.filter(r => { const d = new Date(r.date); return d.getMonth() === m.getMonth() && d.getFullYear() === m.getFullYear(); }).reduce((a, r) => a + r.montant, 0)]);
+        const recByM = months.map(m => [m.toLocaleDateString("fr-FR", {month:"short"}), rec.filter(x => { const d = new Date(x.date); return d.getMonth() === m.getMonth() && d.getFullYear() === m.getFullYear(); }).reduce((a, x) => a + x.montant, 0)]);
         const journal = Store.list("journal").slice(0, 7);
         const hr = new Date().getHours(), hi = hr >= 18 || hr < 5 ? "Bonsoir" : "Bonjour";
-        const todo = NAV.filter(n => n.badge && n.badge() > 0);
+        const covered = k.map(x => x[4]), todo = NAV.filter(n => n.badge && n.badge() > 0 && !covered.includes("#" + n.id));
         const qSrc = (Store.can("demandes") ? dem : []).concat(Store.can("signalements") ? sig : []).filter(x => days(x.date) <= 180);
         const qRows = byQ(qSrc);
-        el.innerHTML = `<section class="hello" aria-label="Bienvenue"><div><h2>${hi}, ${esc(me.prenom)}</h2><p>${new Date().toLocaleDateString("fr-FR", {weekday:"long", day:"numeric", month:"long", year:"numeric"})} · Mairie du 3e arrondissement de Libreville${A3.maire ? " · Maire : " + esc(A3.maire) : ""}</p></div></section>` +
+        // Files de travail : les dossiers à traiter, avec l'action suivante en 1 clic
+        const wl = (col, list, more) => list.length ? `<div class="wl">${list.map(d => `<div class="wl-row" data-open="${col}|${d.id}" tabindex="0" role="button"><span class="wl-main"><b>${d.ref}</b>${isToday(d.date) ? " <span class=\"chip info\">aujourd'hui</span>" : ""}${d.priorite === "Haute" ? " <span class=\"chip bad\">Haute</span>" : ""}<small>${esc(d.typeLabel)} · ${esc(d.prenom)} ${esc(d.nom)}${d.quartier ? " · " + esc(d.quartier) : ""} · ${ago(d.date)}</small></span>${nextBtn(col, d)}</div>`).join("")}</div>${more}` : empty("Rien à traiter : tout est à jour.", "check");
+        const qDem = nDem.slice().sort((a, b) => a.date.localeCompare(b.date)), qSig = nSig.slice().sort((a, b) => (b.priorite === "Haute") - (a.priorite === "Haute") || a.date.localeCompare(b.date));
+        const more = (n, h, l) => n > 6 ? `<p class="wl-more"><a href="${h}">Voir les ${n} ${l} →</a></p>` : "";
+        const cardDem = Store.can("demandes") ? `<div class="card bo-queue"><h2><span>Demandes à traiter <small class="sub">${qDem.length} nouvelle(s) · ${qDem.filter(d => isToday(d.date)).length} reçue(s) aujourd'hui</small></span><a class="btn btn-line btn-sm" href="#demandes">Tout voir</a></h2>${wl("demandes", qDem.slice(0, 6), more(qDem.length, "#demandes", "demandes"))}</div>` : "";
+        const cardSig = Store.can("signalements") ? `<div class="card bo-queue"><h2><span>Signalements à traiter <small class="sub">${qSig.length} nouveau(x) · ${hot.length} prioritaire(s)</small></span><a class="btn btn-line btn-sm" href="#signalements">Tout voir</a></h2>${wl("signalements", qSig.slice(0, 6), more(qSig.length, "#signalements", "signalements"))}</div>` : "";
+        const cardRdv = Store.can("rendezvous") ? `<div class="card"><h2><span>Rendez-vous du jour <small class="sub">${rdvJ.length}</small></span><a class="btn btn-line btn-sm" href="#rendezvous">Planning</a></h2>${rdvJ.length ? `<div class="wl">${rdvJ.slice(0, 6).map(d => `<a class="wl-row" href="#rendezvous"><span class="wl-main"><b>${esc(d.rdv.heure)}</b> ${esc(d.prenom)} ${esc(d.nom)}<small>${esc(d.details || d.typeLabel)}</small></span>${stChip(d.statut === "Remise" ? "Reçu" : d.statut === "Rejetée" ? "Absent" : "Attendu")}</a>`).join("")}</div>` : empty("Aucun rendez-vous aujourd'hui", "ticket")}</div>` : "";
+        const cardInc = Store.can("agents") ? `<div class="card bo-queue"><h2><span>Dossiers à compléter <small class="sub">${incAg.length}</small></span><a class="btn btn-line btn-sm" href="#agents">Personnel</a></h2>${incAg.length ? `<div class="wl">${incAg.slice(0, 6).map(a => `<a class="wl-row" href="#agents"><span class="wl-main"><b>${esc(a.nom)} ${esc(a.prenom)}</b><small>${esc(a.service)} · manque : ${esc(Object.entries(a.pieces).filter(([, v]) => !v).map(([x]) => x).join(", "))}</small></span><span class="chip warn">${Object.values(a.pieces).filter(v => !v).length}</span></a>`).join("")}</div>` : empty("Tous les dossiers sont complets.", "check")}</div>` : "";
+        const cardEnc = Store.can("recettes") ? `<div class="card bo-queue"><h2><span>Derniers encaissements <small class="sub">${money(recJ)} aujourd'hui</small></span><a class="btn btn-line btn-sm" href="#recettes">Recettes</a></h2>${tbl(["Quittance","Nature","Montant"], rec.slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 6).map(x => `<tr class="clk" data-open="recettes|${x.id}"><td><b>${x.quittance}</b><br><small style="color:var(--muted)">${ago(x.date)}</small></td><td>${esc(x.nature)}</td><td style="text-align:right;font-weight:700;white-space:nowrap">${money(x.montant)}</td></tr>`), "Aucun encaissement")}</div>` : "";
+        const prio = r === "etatcivil" ? cardDem + cardRdv : r === "technique" ? cardSig : r === "finances" ? cardEnc : r === "rh" ? cardInc : cardDem + cardSig;
+        const qlinks = {etatcivil:[["#demandes","Demandes"],["#rendezvous","Rendez-vous"],["#actes","Registre"]], technique:[["#signalements","Signalements"],["#chantiers","Chantiers"],["#stocks","Stocks"]], finances:[["#recettes","Encaisser"],["#vignettes","Contrôle vignettes"],["#indicateurs","Indicateurs"]], rh:[["#agents","Personnel"]]}[r] || [["#demandes","Demandes"],["#indicateurs","Indicateurs"],["#agenda","Agenda"]];
+        el.innerHTML = `<section class="hello" aria-label="Bienvenue"><div><h2>${hi}, ${esc(me.prenom)}</h2><p>${new Date().toLocaleDateString("fr-FR", {weekday:"long", day:"numeric", month:"long", year:"numeric"})} · ${esc(lead)}${full && A3.maire ? " · Maire : " + esc(A3.maire) : ""}</p></div><div class="hello-act">${qlinks.filter(q => NAV.some(n => "#" + n.id === q[0])).map(q => `<a href="${q[0]}">${q[1]}</a>`).join("")}</div></section>` +
           (todo.length ? `<div class="todo-row" role="list" aria-label="À traiter">${todo.map(n => `<a class="todo" role="listitem" href="#${n.id}"><span class="ic">${ICONS[n.ic]}</span><b>${n.badge()}</b><span>${esc(n.l)}</span></a>`).join("")}</div>` : "") +
-          kpis(k.slice(0, 4)) +
-          (alerts.length ? `<div class="card"><h2>Alertes ${Store.LIVE ? "" : '<small style="font-weight:500;color:var(--muted);font-size:.8rem">remontées automatiquement</small>'}</h2>${alerts.map(([c, t]) => `<div class="alert-box ${c === "warn" ? "warn" : ""}">${ICONS.alert}<span>${t}</span></div>`).join("")}</div>` : `<div class="alert-box ok">${ICONS.check}<span>Aucune alerte : tout est sous contrôle.</span></div>`) +
+          kpis(k) +
+          `<div class="bo-grid wide">${prio}</div>` +
+          (alerts.length ? `<div class="card"><h2>Alertes <small class="sub">remontées automatiquement</small></h2>${alerts.map(([c, t, h]) => `<a class="alert-box ${c === "warn" ? "warn" : ""}" href="${h}">${ICONS.alert}<span>${t}</span></a>`).join("")}</div>` : `<div class="alert-box ok">${ICONS.check}<span>Aucune alerte : tout est sous contrôle.</span></div>`) +
           (Store.can("chantiers") ? dotCard(ch) : "") +
           `<div class="bo-grid">
             ${Store.can("recettes") ? `<div class="card"><h2>Recettes des 6 derniers mois</h2>${vbars(recByM, mshort)}</div>` : ""}
             ${qSrc.length ? `<div class="card"><h2>Demandes & signalements par quartier <small class="sub">6 mois</small></h2>${hbars(qRows)}</div>` : ""}
-            ${Store.can("demandes") ? `<div class="card"><h2>Dernières demandes <a class="btn btn-line btn-sm" href="#demandes">Tout voir</a></h2>${tbl(["Dossier","Démarche","Statut"], dem.slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 6).map(d => `<tr><td><b>${d.ref}</b><br><small style="color:var(--muted)">${ago(d.date)}</small></td><td>${esc(d.typeLabel)}</td><td>${stChip(d.statut)}</td></tr>`), "Aucune demande pour le moment")}</div>` : ""}
-            ${Store.can("signalements") ? `<div class="card"><h2>Signalements récents <a class="btn btn-line btn-sm" href="#signalements">Tout voir</a></h2>${tbl(["Réf.","Problème","Quartier","Statut"], sig.slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 6).map(s => `<tr><td><b>${s.ref}</b></td><td>${esc(s.typeLabel)}</td><td>${esc(s.quartier)}</td><td>${stChip(s.statut)}</td></tr>`), "Aucun signalement pour le moment")}</div>` : ""}
+            ${full ? cardRdv : ""}
+            ${Store.can("demandes") && full ? `<div class="card"><h2>Dernières demandes <a class="btn btn-line btn-sm" href="#demandes">Tout voir</a></h2>${tbl(["Dossier","Démarche","Statut"], dem.slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 6).map(d => `<tr class="clk" data-open="demandes|${d.id}"><td><b>${d.ref}</b><br><small style="color:var(--muted)">${ago(d.date)}</small></td><td>${esc(d.typeLabel)}</td><td>${stChip(d.statut)}</td></tr>`), "Aucune demande pour le moment")}</div>` : ""}
+            ${Store.can("signalements") && full ? `<div class="card"><h2>Signalements récents <a class="btn btn-line btn-sm" href="#signalements">Tout voir</a></h2>${tbl(["Réf.","Problème","Quartier","Statut"], sig.slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 6).map(s => `<tr class="clk" data-open="signalements|${s.id}"><td><b>${s.ref}</b></td><td>${esc(s.typeLabel)}</td><td>${esc(s.quartier)}</td><td>${stChip(s.statut)}</td></tr>`), "Aucun signalement pour le moment")}</div>` : ""}
             ${Store.can("chantiers") ? `<div class="card"><h2>Avancement des chantiers <a class="btn btn-line btn-sm" href="#chantiers">Tout voir</a></h2>${ch.filter(c => c.statut !== "Réalisé").length ? hbars(ch.filter(c => c.statut !== "Réalisé").slice(0, 6).map(c => [c.titre, c.avancement]), v => v + " %") : empty("Aucun chantier en cours", "crane")}</div>` : ""}
             ${Store.can("agenda") ? `<div class="card"><h2>Prochains rendez-vous <a class="btn btn-line btn-sm" href="#agenda">Agenda</a></h2>${calList(L("agenda").filter(e => new Date(e.date) > Date.now() - 864e5).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 4))}</div>` : ""}
-            ${Store.can("journal") || Store.ROLES[me.role].mods === "*" ? `<div class="card"><h2>Activité récente <a class="btn btn-line btn-sm" href="#journal">Journal</a></h2>${journal.length ? `<div class="hist">${journal.map(j => `<div><small>${ago(j.date)} · ${esc(j.user)}</small><b>${esc(j.action)}</b> — ${esc(j.detail)}</div>`).join("")}</div>` : empty("Aucune activité")}</div>` : ""}
+            ${Store.can("journal") || full ? `<div class="card"><h2>Activité récente <a class="btn btn-line btn-sm" href="#journal">Journal</a></h2>${journal.length ? `<div class="hist">${journal.map(j => `<div><small>${ago(j.date)} · ${esc(j.user)}</small><b>${esc(j.action)}</b> — ${esc(j.detail)}</div>`).join("")}</div>` : empty("Aucune activité")}</div>` : ""}
           </div>`;
+        el.addEventListener("click", e => {
+          const q = e.target.closest("[data-q]"); if (q) { e.stopPropagation(); const [c, id, st] = q.dataset.q.split("|"); q.disabled = true; return quickStatus(c, id, st); }
+          const o = e.target.closest("[data-open]"); if (o) { const [c, id] = o.dataset.open.split("|"); if (c === "recettes") quittance(Store.db().recettes.find(x => x.id === id)); else fiche(c, id); }
+        });
+        el.addEventListener("keydown", e => { if ((e.key === "Enter" || e.key === " ") && e.target.matches && e.target.matches("[data-open]")) { e.preventDefault(); e.target.click(); } });
       },
 
       /* ---------------- Registre des documents authentifiés ---------------- */
@@ -227,10 +270,12 @@ const P = (() => {
             <div class="row"><div class="field"><label>Type de document</label><select name="type">${opt(TYPES_DOC)}</select></div><div class="field"><label>Numéro du document</label><input name="numAff" required placeholder="Ex. 0312/2004"></div></div>
             <div class="row"><div class="field"><label>Nom</label><input name="nom" required></div><div class="field"><label>Prénom(s)</label><input name="prenoms" required></div></div>
             <div class="row"><div class="field"><label>Date de naissance</label><input name="naissance" type="date"></div><div class="field"><label>Lieu</label><input name="lieu" value="Libreville"></div></div>
-            <div class="field"><label>Téléphone</label><input name="tel" type="tel" inputmode="tel"></div>
+            <div class="field"><label>Téléphone</label><input name="tel" type="tel" inputmode="tel" autocomplete="off"></div>
             <button class="btn btn-orange">${ICONS.shieldok} Original vérifié : enregistrer et authentifier</button></form>`);
           document.getElementById("naf").onsubmit = async e => {
             e.preventDefault(); const d = Object.fromEntries(new FormData(e.target)); d.arr = N3; d.num = normNum(d.numAff);
+            if (d.tel && !TEL_RE.test(d.tel.trim())) return bad(e.target, "Numéro de téléphone invalide : saisissez au moins 8 chiffres.", "tel");
+            if (d.naissance && d.naissance > today()) return bad(e.target, "La date de naissance ne peut pas être dans le futur.", "naissance");
             const ex = Store.db().authentifications.find(x => x.num === d.num && normNom(x.nom) === normNom(d.nom));
             if (ex) { if (ex.statut === "Authentifié") return toast("Ce document est déjà authentifié.", "err"); closeModal(); if (await authentifier(ex, true, "original présenté au guichet")) refresh(); return; }
             const now = new Date().toISOString();
@@ -335,7 +380,7 @@ const P = (() => {
           modal("Enregistrer un acte", `<form class="form" id="af">
             <div class="field"><label>Type d'acte</label><select name="type">${opt(Object.entries(TY))}</select></div>
             <div class="row"><div class="field"><label>Nom</label><input name="nom" required></div><div class="field"><label>Prénom(s)</label><input name="prenoms" required></div></div>
-            <div class="row"><div class="field"><label>Date de l'événement</label><input name="dateEvt" type="date" required value="${new Date().toISOString().slice(0, 10)}"></div><div class="field"><label>Sexe</label><select name="sexe">${opt([["M","Masculin"],["F","Féminin"]])}</select></div></div>
+            <div class="row"><div class="field"><label>Date de l'événement</label><input name="dateEvt" type="date" required max="${today()}" value="${today()}"></div><div class="field"><label>Sexe</label><select name="sexe">${opt([["M","Masculin"],["F","Féminin"]])}</select></div></div>
             <div class="field"><label>Lieu</label><input name="lieu" value="Libreville"></div>
             <div class="row" data-for="naissance"><div class="field"><label>Père</label><input name="pere"></div><div class="field"><label>Mère</label><input name="mere"></div></div>
             <div class="field" data-for="mariage" hidden><label>Conjoint(e)</label><input name="conjoint"></div>
@@ -344,7 +389,9 @@ const P = (() => {
           fm.type.onchange = sync; sync();
           fm.onsubmit = async e => {
             e.preventDefault(); const d = Object.fromEntries(new FormData(fm)); d.arr = N3;
-            const n = Store.db().actes.length + 101, num = {naissance:"N", mariage:"M", deces:"D"}[d.type] + "-" + new Date().getFullYear() + "-" + String(n).padStart(5, "0");
+            if (d.dateEvt > today()) return bad(fm, "La date de l'événement ne peut pas être dans le futur.", "dateEvt");
+            if (d.type === "mariage" && !(d.conjoint || "").trim()) return bad(fm, "Indiquez le nom du conjoint pour un acte de mariage.", "conjoint");
+            const n = Math.max(Store.db().actes.length + 100, ...Store.db().actes.map(a => parseInt(String(a.num).split("-").pop(), 10) || 0)) + 1, num = {naissance:"N", mariage:"M", deces:"D"}[d.type] + "-" + new Date().getFullYear() + "-" + String(n).padStart(5, "0");
             const a = await act(() => Store.add("actes", {...d, num, officier:"Officier d'état civil — Mairie du 3e arrondissement"}), "Acte " + num + " enregistré.");
             if (a) { Store.log("Acte enregistré", num + " · " + d.nom + " " + d.prenoms); refresh(); acteView(a); }
           };
@@ -363,12 +410,12 @@ const P = (() => {
         const form = (d) => {
           modal(d ? "Planifier l'audience" : "Nouveau rendez-vous", `<form class="form" id="ef">
             <div class="field"><label>Intitulé</label><input name="titre" required value="${d ? esc("Audience – " + d.prenom + " " + d.nom) : ""}"></div>
-            <div class="row"><div class="field"><label>Date et heure</label><input name="date" type="datetime-local" required></div><div class="field"><label>Type</label><select name="type">${opt(["Audience","Réunion","Terrain","Conseil","Cérémonie"], d ? "Audience" : "")}</select></div></div>
+            <div class="row"><div class="field"><label>Date et heure</label><input name="date" type="datetime-local" required min="${new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 16)}"></div><div class="field"><label>Type</label><select name="type">${opt(["Audience","Réunion","Terrain","Conseil","Cérémonie"], d ? "Audience" : "")}</select></div></div>
             <div class="field"><label>Lieu</label><input name="lieu" value="${d ? "Cabinet du maire" : ""}" placeholder="Ex. Mairie du 3e, Mont-Bouët…"></div>
             <button class="btn btn-orange">${ICONS.save} Enregistrer</button></form>`);
           const fm = document.getElementById("ef");
           fm.onsubmit = async e => {
-            e.preventDefault(); const v = Object.fromEntries(new FormData(fm)); v.date = new Date(v.date).toISOString(); v.arr = N3;
+            e.preventDefault(); const v = Object.fromEntries(new FormData(fm)); if (new Date(v.date) < new Date(Date.now() - 6e4)) return bad(fm, "Choisissez une date et une heure à venir.", "date"); v.date = new Date(v.date).toISOString(); v.arr = N3;
             if (!await act(() => Store.add("agenda", v), "Rendez-vous ajouté à l'agenda.")) return;
             if (d) { const h = d.historique.concat([{date:new Date().toISOString(), statut:"Prête", note:`Audience fixée le ${dtime(v.date)} (${v.lieu}). Merci de vous présenter 15 minutes avant.`, pub:true}]); await act(() => Store.update("demandes", d.id, {statut:"Prête", historique:h})); }
             Store.log("Agenda", v.titre + " · " + dtime(v.date)); refresh();
@@ -425,18 +472,18 @@ const P = (() => {
 
       /* ---------------- Recettes ---------------- */
       recettes(el) {
-        const f = F.rec || (F.rec = {nature:"", per:"30"});
+        const f = F.rec || (F.rec = {nature:"", per:"30", q:""});
         const all = L("recettes");
         const inPer = r => f.per === "tout" ? true : f.per === "mois" ? thisMonth(r.date) : days(r.date) <= ({"30":30, "90":90, "180":180}[f.per] || 9999);
-        const list = all.filter(r => inPer(r) && (!f.nature || r.nature === f.nature)).sort((a, b) => b.date.localeCompare(a.date));
+        const list = all.filter(r => inPer(r) && (!f.nature || r.nature === f.nature) && (!f.q || (r.quittance + " " + r.payeur + " " + r.nature).toLowerCase().includes((f.q || "").toLowerCase()))).sort((a, b) => b.date.localeCompare(a.date));
         const tot = list.reduce((a, r) => a + r.montant, 0), yr = all.filter(r => new Date(r.date).getFullYear() === new Date().getFullYear()).reduce((a, r) => a + r.montant, 0);
         const mm = list.filter(r => Store.ONLINE_RE.test(r.mode)).reduce((a, r) => a + r.montant, 0);
         const byNat = Store.NATURES.map(n => [n, list.filter(r => r.nature === n).reduce((a, r) => a + r.montant, 0)]).filter(x => x[1]).sort((a, b) => b[1] - a[1]);
         const byQr = byQ(list.filter(r => r.quartier));
         el.innerHTML = kpis([["wallet","ic-g", mshort(tot), "FCFA sur la période"],["chart","ic-b", mshort(yr), "FCFA depuis janvier"],["file","ic-y", list.length, "quittances émises"],["phone","ic-o", tot ? Math.round(mm / tot * 100) + " %" : "—", "payé en ligne (Airtel, Moov, carte)"]]) +
           `<div class="cols"><div class="card"><h2>Encaissements <span class="mini-btns"><button class="btn btn-orange btn-sm" id="new">${ICONS.plus} Nouvel encaissement</button><button class="btn btn-line btn-sm" id="exp">${ICONS.dl} Export</button></span></h2>
-            <div class="toolbar"><div class="field"><label>Période</label><select data-f="per">${opt([["mois","Mois en cours"],["30","30 derniers jours"],["90","3 derniers mois"],["180","6 derniers mois"],["tout","Tout"]], f.per)}</select></div><div class="field"><label>Nature</label><select data-f="nature"><option value="">Toutes</option>${opt(Store.NATURES, f.nature)}</select></div></div>
-            ${tbl(["Quittance","Date","Nature","Payeur","Mode","Montant"], list.slice(0, 150).map(r => `<tr class="clk" data-id="${r.id}"><td><b>${r.quittance}</b></td><td>${date(r.date)}</td><td>${esc(r.nature)}</td><td>${esc(r.payeur)}</td><td>${esc(r.mode)}</td><td style="text-align:right;font-weight:700;white-space:nowrap">${money(r.montant)}</td></tr>`), "Aucun encaissement sur la période")}</div>
+            <div class="toolbar"><div class="field"><label>Rechercher</label><input data-f="q" type="search" placeholder="Quittance ou payeur" value="${esc(f.q || "")}"></div><div class="field"><label>Période</label><select data-f="per">${opt([["mois","Mois en cours"],["30","30 derniers jours"],["90","3 derniers mois"],["180","6 derniers mois"],["tout","Tout"]], f.per)}</select></div><div class="field"><label>Nature</label><select data-f="nature"><option value="">Toutes</option>${opt(Store.NATURES, f.nature)}</select></div></div>
+            ${tbl(["Quittance","Date","Nature","Payeur","Mode","Montant"], list.slice(0, 150).map(r => `<tr class="clk" data-id="${r.id}"><td><b>${r.quittance}</b></td><td>${date(r.date)}</td><td>${esc(r.nature)}</td><td>${esc(r.payeur)}</td><td>${esc(r.mode)}</td><td style="text-align:right;font-weight:700;white-space:nowrap">${money(r.montant)}</td></tr>`), "Aucun encaissement sur la période", resetBtn("rec"))}${list.length ? `<div class="sumrow"><span>${list.length} quittance(s)</span><b>Total : ${money(tot)}</b></div>` : ""}</div>
             <div><div class="card"><h2>Par nature</h2>${byNat.length ? hbars(byNat, mshort) : empty("—")}</div></div></div>`;
         filterBar(null, e => { f[e.target.dataset.f] = e.target.value; route(false); }, el);
         el.querySelector("#exp").onclick = () => csv("recettes", ["Quittance","Date","Nature","Payeur","Mode","Montant"], list.map(r => [r.quittance, date(r.date), r.nature, r.payeur, r.mode, r.montant]));
@@ -444,12 +491,14 @@ const P = (() => {
         el.querySelector("#new").onclick = () => {
           modal("Nouvel encaissement", `<form class="form" id="rf">
             <div class="field"><label>Nature de la recette</label><select name="nature">${opt(Store.NATURES)}</select></div>
-            <div class="row"><div class="field"><label>Montant (FCFA)</label><input name="montant" type="number" inputmode="numeric" min="100" step="100" required></div><div class="field"><label>Mode de paiement</label><select name="mode">${opt(Store.MODES.concat(["Chèque"]))}</select></div></div>
+            <div class="row"><div class="field"><label>Montant (FCFA)</label><input name="montant" type="number" inputmode="numeric" min="100" step="1" required placeholder="Ex. 5000"></div><div class="field"><label>Mode de paiement</label><select name="mode">${opt(Store.MODES.concat(["Chèque"]))}</select></div></div>
             <div class="field"><label>Payeur (nom ou commerce)</label><input name="payeur" required></div>
             <button class="btn btn-orange">${ICONS.save} Enregistrer et éditer la quittance</button></form>`);
           const fm = document.getElementById("rf");
           fm.onsubmit = async e => {
-            e.preventDefault(); const d = Object.fromEntries(new FormData(fm)); d.arr = N3; d.montant = +d.montant;
+            e.preventDefault(); const d = Object.fromEntries(new FormData(fm)); d.arr = N3; d.montant = Math.round(+d.montant); d.payeur = d.payeur.trim();
+            if (!(d.montant >= 100)) return bad(fm, "Le montant doit être d'au moins 100 FCFA.", "montant");
+            if (!d.payeur) return bad(fm, "Indiquez le nom du payeur.", "payeur");
             d.quittance = "Q-" + String(new Date().getFullYear()).slice(2) + "-" + String(5200 + Store.db().recettes.length + 1).padStart(6, "0"); d.agent = me.prenom + " " + me.nom;
             const r = await act(() => Store.add("recettes", d), "Encaissement enregistré.");
             if (r) { Store.log("Encaissement", d.quittance + " · " + d.nature + " · " + money(d.montant)); refresh(); quittance(r); }
@@ -484,7 +533,8 @@ const P = (() => {
           fm.onsubmit = async e => {
             e.preventDefault(); const fd = new FormData(fm), d = {pieces:{}};
             for (const [k, v] of fd) if (!k.startsWith("p:")) d[k] = v;
-            Object.keys(a.pieces).forEach(k => d.pieces[k] = fd.has("p:" + k)); d.arr = N3;
+            Object.keys(a.pieces).forEach(k => d.pieces[k] = fd.has("p:" + k)); d.arr = N3; d.matricule = d.matricule.trim();
+            if (all.some(x => x.id !== a.id && x.matricule.toLowerCase() === d.matricule.toLowerCase())) return bad(fm, "Ce matricule existe déjà : choisissez-en un autre.", "matricule");
             if (await act(() => isNew ? Store.add("agents", {...d, entree:a.entree}) : Store.update("agents", a.id, d), "Dossier enregistré.")) { Store.log(isNew ? "Agent ajouté" : "Dossier agent mis à jour", d.matricule + " · " + d.nom + " " + d.prenom); refresh(); }
           };
           const del = document.getElementById("gdel"); if (del) del.onclick = async () => { if (await ask("Supprimer ce dossier ?") && await act(() => Store.remove("agents", a.id), "Dossier supprimé.")) refresh(); };
@@ -502,7 +552,7 @@ const P = (() => {
           ${tbl(["Article","Service","Quantité","Seuil","Niveau",""], list.map(s => `<tr><td><b>${esc(s.article)}</b></td><td>${esc(s.service)}</td><td><b>${s.qte}</b> ${esc(s.unite)}(s)</td><td>${s.seuil}</td><td style="min-width:120px"><div class="prog ${s.qte <= s.seuil ? "low" : ""}"><i style="width:${Math.min(100, s.qte / (s.seuil * 3) * 100)}%"></i></div></td><td><div class="mini-btns"><button class="btn btn-line btn-sm" data-mv="in" data-id="${s.id}">+ Entrée</button><button class="btn btn-line btn-sm" data-mv="out" data-id="${s.id}">− Sortie</button><button class="btn btn-line btn-sm" data-h="${s.id}">Historique</button></div></td></tr>`), "Aucun article")}</div>`;
         el.querySelectorAll("[data-mv]").forEach(b => b.onclick = () => {
           const s = Store.db().stocks.find(x => x.id === b.dataset.id), inn = b.dataset.mv === "in";
-          modal((inn ? "Entrée en stock — " : "Sortie de stock — ") + s.article, `<form class="form" id="mf"><div class="row"><div class="field"><label>Quantité (${esc(s.unite)}s)</label><input name="q" type="number" min="1" ${inn ? "" : `max="${s.qte}"`} required></div><div class="field"><label>Motif</label><input name="motif" required value="${inn ? "Livraison fournisseur" : "Sortie pour le service"}"></div></div><button class="btn btn-orange">${ICONS.save} Valider</button></form>`);
+          modal((inn ? "Entrée en stock — " : "Sortie de stock — ") + s.article, `<form class="form" id="mf"><div class="row"><div class="field"><label>Quantité (${esc(s.unite)}s)</label><input name="q" type="number" inputmode="numeric" min="1" ${inn ? "" : `max="${s.qte}"`} required></div><div class="field"><label>Motif</label><input name="motif" required value="${inn ? "Livraison fournisseur" : "Sortie pour le service"}"></div></div><button class="btn btn-orange">${ICONS.save} Valider</button></form>`);
           document.getElementById("mf").onsubmit = async e => {
             e.preventDefault(); const q = +e.target.q.value, delta = inn ? q : -q, nq = s.qte + delta;
             const hist = (s.hist || []).concat([{date:new Date().toISOString(), delta, motif:e.target.motif.value, by:me.prenom + " " + me.nom}]);
@@ -513,7 +563,7 @@ const P = (() => {
         });
         el.querySelectorAll("[data-h]").forEach(b => b.onclick = () => { const s = Store.db().stocks.find(x => x.id === b.dataset.h); modal("Mouvements — " + s.article, (s.hist || []).length ? `<div class="hist">${s.hist.slice().reverse().map(h => `<div><small>${dtime(h.date)} · ${esc(h.by)}</small><b style="color:${h.delta < 0 ? "var(--bad)" : "var(--ok)"}">${h.delta > 0 ? "+" : ""}${h.delta}</b> — ${esc(h.motif)}</div>`).join("")}</div>` : empty("Aucun mouvement")); });
         el.querySelector("#new").onclick = () => {
-          modal("Nouvel article", `<form class="form" id="nf"><div class="field"><label>Article</label><input name="article" required></div><div class="row"><div class="field"><label>Unité</label><input name="unite" required value="unité"></div><div class="field"><label>Service</label><input name="service" required value="${esc(Store.ROLES[me.role].l)}"></div></div><div class="row"><div class="field"><label>Quantité initiale</label><input name="qte" type="number" min="0" required></div><div class="field"><label>Seuil d'alerte</label><input name="seuil" type="number" min="0" required></div></div><button class="btn btn-orange">${ICONS.save} Ajouter</button></form>`);
+          modal("Nouvel article", `<form class="form" id="nf"><div class="field"><label>Article</label><input name="article" required></div><div class="row"><div class="field"><label>Unité</label><input name="unite" required value="unité"></div><div class="field"><label>Service</label><input name="service" required value="${esc(Store.ROLES[me.role].l)}"></div></div><div class="row"><div class="field"><label>Quantité initiale</label><input name="qte" type="number" inputmode="numeric" min="0" required></div><div class="field"><label>Seuil d'alerte</label><input name="seuil" type="number" inputmode="numeric" min="0" required></div></div><button class="btn btn-orange">${ICONS.save} Ajouter</button></form>`);
           document.getElementById("nf").onsubmit = async e => { e.preventDefault(); const d = Object.fromEntries(new FormData(e.target)); d.qte = +d.qte; d.seuil = +d.seuil; d.arr = N3; d.hist = [{date:new Date().toISOString(), delta:d.qte, motif:"Inventaire initial", by:me.prenom + " " + me.nom}]; if (await act(() => Store.add("stocks", d), "Article ajouté.")) refresh(); };
         };
       },
@@ -533,7 +583,7 @@ const P = (() => {
           modal(isNew ? "Nouveau chantier" : c.titre, `<form class="form" id="cf">
             <div class="field"><label>Intitulé</label><input name="titre" required value="${esc(c.titre)}"></div>
             <div class="field"><label>Thème</label><select name="theme">${opt(["Assainissement","Voirie","Éclairage","Cadre de vie","Logement","Équipement","Social"], c.theme)}</select></div>
-            <div class="row"><div class="field"><label>Budget (FCFA)</label><input name="budget" type="number" min="0" value="${c.budget}"></div><div class="field"><label>Montant engagé (FCFA)</label><input name="engage" type="number" min="0" value="${c.engage}"></div></div>
+            <div class="row"><div class="field"><label>Budget (FCFA)</label><input name="budget" type="number" inputmode="numeric" min="0" value="${c.budget}"></div><div class="field"><label>Montant engagé (FCFA)</label><input name="engage" type="number" inputmode="numeric" min="0" value="${c.engage}"></div></div>
             <div class="row"><div class="field"><label>Statut</label><select name="statut">${opt(Store.STATUTS.chantiers, c.statut)}</select></div><div class="field"><label>Avancement : <b id="avv">${c.avancement} %</b></label><input name="avancement" type="range" min="0" max="100" step="5" value="${c.avancement}" style="padding:0"></div></div>
             <div class="row"><div class="field"><label>Début</label><input name="debut" type="date" value="${esc(c.debut)}"></div><div class="field"><label>Fin prévue</label><input name="fin" type="date" value="${esc(c.fin)}"></div></div>
             <div class="field"><label>Entreprise / régie</label><input name="entreprise" value="${esc(c.entreprise)}"></div>
@@ -544,6 +594,9 @@ const P = (() => {
           fm.avancement.oninput = () => document.getElementById("avv").textContent = fm.avancement.value + " %";
           fm.onsubmit = async e => {
             e.preventDefault(); const d = Object.fromEntries(new FormData(fm)); const note = d.note; delete d.note;
+            if (d.debut && d.fin && d.fin < d.debut) return bad(fm, "La date de fin prévue est antérieure au début du chantier.", "fin");
+            if (+d.engage > +d.budget) return bad(fm, "Le montant engagé dépasse le budget du chantier.", "engage");
+            if (d.statut === "Réalisé" && +d.avancement < 100) d.avancement = 100;
             d.arr = N3; d.budget = +d.budget; d.engage = +d.engage; d.avancement = +d.avancement;
             d.notes = (c.notes || []).concat(note ? [{date:new Date().toISOString(), texte:note}] : []);
             if (await act(() => isNew ? Store.add("chantiers", d) : Store.update("chantiers", c.id, d), "Chantier enregistré.")) { Store.log(isNew ? "Chantier créé" : "Chantier mis à jour", d.titre + " : " + d.avancement + " %"); refresh(); }
@@ -556,18 +609,22 @@ const P = (() => {
 
       /* ---------------- Publications ---------------- */
       publications(el) {
-        const list = L("publications").slice().sort((a, b) => b.date.localeCompare(a.date));
-        el.innerHTML = `<div class="card"><h2>Publications <button class="btn btn-orange btn-sm" id="new">${ICONS.plus} Nouvelle publication</button></h2>
+        const f = F.pb || (F.pb = {s:""}), allP = L("publications").slice().sort((a, b) => b.date.localeCompare(a.date)), list = allP.filter(p => !f.s || (f.s === "on") === !!p.publie);
+        el.innerHTML = `<div class="card"><h2>Publications <small class="sub">${allP.filter(p => p.publie).length} en ligne · ${allP.filter(p => !p.publie).length} brouillon(s)</small> <button class="btn btn-orange btn-sm" id="new">${ICONS.plus} Nouvelle publication</button></h2>
           <p style="color:var(--muted);font-size:.88rem;margin-bottom:1rem">Les publications marquées « En ligne » apparaissent immédiatement sur la page d'accueil et la page Actualités du site.</p>
+          <div class="tools"><div class="seg" role="group" aria-label="Filtrer">${[["","Toutes"],["on","En ligne"],["off","Brouillons"]].map(([v, l]) => `<button type="button" data-s="${v}" class="${f.s === v ? "on" : ""}">${l}</button>`).join("")}</div></div>
           <div class="feed">${list.length ? list.map(p => `<div class="post ${p.publie ? "" : "devoir"}"><div class="top"><h4>${esc(p.titre)}</h4><span class="chip ${p.publie ? "ok" : "warn"}">${p.publie ? "En ligne" : "Brouillon"}</span></div><p>${esc(p.texte)}</p><small>${esc(p.type)} · ${date(p.date)}</small>
-            <div class="mini-btns" style="margin-top:.5rem"><button class="btn btn-line btn-sm" data-tog="${p.id}">${p.publie ? "Retirer du site" : "Publier sur le site"}</button><button class="btn btn-line btn-sm" data-ed="${p.id}">Modifier</button><button class="btn btn-line btn-sm" data-del="${p.id}">Supprimer</button></div></div>`).join("") : empty("Aucune publication", "mega")}</div></div>`;
+            <div class="mini-btns" style="margin-top:.5rem"><button class="btn btn-line btn-sm" data-tog="${p.id}">${p.publie ? "Retirer du site" : "Publier sur le site"}</button><button class="btn btn-line btn-sm" data-ed="${p.id}">Modifier</button><button class="btn btn-line btn-sm" data-del="${p.id}">Supprimer</button></div></div>`).join("") : empty(f.s ? "Aucune publication dans cette catégorie." : "Aucune publication : rédigez la première avec « Nouvelle publication ».", "mega")}</div></div>`;
+        el.querySelectorAll(".seg [data-s]").forEach(b => b.onclick = () => { f.s = b.dataset.s; saveF(); route(false); });
         const edit = p => {
           const isNew = !p; p = p || {type:"Communiqué", titre:"", texte:"", arr:N3, publie:true};
           modal(isNew ? "Nouvelle publication" : "Modifier la publication", `<form class="form" id="pf"><div class="field"><label>Type</label><select name="type">${opt(["Communiqué","Avis","Marché public","Recrutement","Actualité"], p.type)}</select></div>
             <div class="field"><label>Titre</label><input name="titre" required maxlength="140" value="${esc(p.titre)}"></div><div class="field"><label>Texte</label><textarea name="texte" required>${esc(p.texte)}</textarea></div>
             <label style="display:flex;gap:.5rem;align-items:center"><input type="checkbox" name="publie" ${p.publie ? "checked" : ""}> Publier immédiatement sur le site</label><button class="btn btn-orange">${ICONS.save} Enregistrer</button></form>`);
           document.getElementById("pf").onsubmit = async e => {
-            e.preventDefault(); const d = Object.fromEntries(new FormData(e.target)); d.publie = !!d.publie; d.arr = N3;
+            e.preventDefault(); const d = Object.fromEntries(new FormData(e.target)); d.publie = !!d.publie; d.arr = N3; d.titre = d.titre.trim(); d.texte = d.texte.trim();
+            if (d.titre.length < 5) return bad(e.target, "Le titre est trop court (5 caractères minimum).", "titre");
+            if (d.texte.length < 3) return bad(e.target, "Le texte est vide : rédigez votre message.", "texte");
             if (await act(() => isNew ? Store.add("publications", d) : Store.update("publications", p.id, d), d.publie ? "Publié sur le site." : "Brouillon enregistré.")) { Store.log("Publication", d.titre); refresh(); }
           };
         };
@@ -579,18 +636,25 @@ const P = (() => {
 
       /* ---------------- Messages du site ---------------- */
       contacts(el) {
-        const list = Store.list("contacts").slice().sort((a, b) => b.date.localeCompare(a.date));
-        el.innerHTML = `<div class="card"><h2>Messages reçus via le site</h2><div class="feed">${list.length ? list.map(c => `<div class="post ${c.lu ? "" : "urgent"}"><div class="top"><h4>${esc(c.sujet)} — ${esc(c.nom)}</h4>${c.lu ? `<span class="chip neu">Lu</span>` : `<span class="chip bad">Nouveau</span>`}</div><p>${esc(c.message)}</p>${(c.pj || []).length ? `<div class="pjlist" style="margin:.4rem 0">${c.pj.map(x => `<a class="pjchip" href="${x.data}" download="${esc(x.nom)}" target="_blank">${ICONS.file}${esc(x.nom)} <small>${x.taille || ""} Ko</small></a>`).join("")}</div>` : ""}<small>${esc(c.email)}${c.tel ? " · " + esc(c.tel) : ""} · ${ago(c.date)}</small>
-          <div class="mini-btns" style="margin-top:.5rem">${c.email ? `<a class="btn btn-navy btn-sm" href="mailto:${esc(c.email)}?subject=${encodeURIComponent("Re : " + c.sujet)}">${ICONS.mail} Répondre</a>` : ""}${c.lu ? "" : `<button class="btn btn-line btn-sm" data-lu="${c.id}">Marquer comme lu</button>`}<button class="btn btn-line btn-sm" data-del="${c.id}">Supprimer</button></div></div>`).join("") : empty("Aucun message", "mail")}</div></div>`;
-        el.querySelectorAll("[data-lu]").forEach(b => b.onclick = async () => { if (await act(() => Store.update("contacts", b.dataset.lu, {lu:true}))) refresh(); });
+        const f = F.ct || (F.ct = {lu:""}), allC = Store.list("contacts").slice().sort((a, b) => b.date.localeCompare(a.date)), nonLus = allC.filter(c => !c.lu).length;
+        const list = f.lu === "1" ? allC.filter(c => !c.lu) : allC;
+        el.innerHTML = `<div class="card"><h2><span>Messages reçus via le site <small class="sub">${allC.length} message(s)</small></span><span class="mini-btns"><button class="btn btn-line btn-sm" id="allread" ${nonLus ? "" : "disabled"}>${ICONS.check} Tout marquer comme lu</button></span></h2>
+          <div class="tools"><div class="seg" role="group" aria-label="Filtrer"><button type="button" data-lu="" class="${f.lu ? "" : "on"}">Tous</button><button type="button" data-lu="1" class="${f.lu ? "on" : ""}">Non lus (${nonLus})</button></div></div><div class="feed">${list.length ? list.map(c => `<div class="post ${c.lu ? "" : "urgent"}"><div class="top"><h4>${esc(c.sujet)} — ${esc(c.nom)}</h4>${c.lu ? `<span class="chip neu">Lu</span>` : `<span class="chip bad">Nouveau</span>`}</div><p>${esc(c.message)}</p>${(c.pj || []).length ? `<div class="pjlist" style="margin:.4rem 0">${c.pj.map(x => `<a class="pjchip" href="${x.data}" download="${esc(x.nom)}" target="_blank">${ICONS.file}${esc(x.nom)} <small>${x.taille || ""} Ko</small></a>`).join("")}</div>` : ""}<small>${esc(c.email)}${c.tel ? " · " + esc(c.tel) : ""} · ${ago(c.date)}</small>
+          <div class="mini-btns" style="margin-top:.5rem">${c.email ? `<a class="btn btn-navy btn-sm" href="mailto:${esc(c.email)}?subject=${encodeURIComponent("Re : " + c.sujet)}">${ICONS.mail} Répondre</a>` : ""}${c.lu ? "" : `<button class="btn btn-line btn-sm" data-read="${c.id}">Marquer comme lu</button>`}<button class="btn btn-line btn-sm" data-del="${c.id}">Supprimer</button></div></div>`).join("") : empty(f.lu ? "Aucun message non lu : tout est à jour." : "Aucun message", "mail")}</div></div>`;
+        el.querySelectorAll(".seg [data-lu]").forEach(b => b.onclick = () => { f.lu = b.dataset.lu; saveF(); route(false); });
+        el.querySelector("#allread").onclick = async () => { for (const c of allC.filter(c => !c.lu)) await act(() => Store.update("contacts", c.id, {lu:true})); toast("Tous les messages sont marqués comme lus.", "ok"); route(false); };
+        el.querySelectorAll("[data-read]").forEach(b => b.onclick = async () => { if (await act(() => Store.update("contacts", b.dataset.read, {lu:true}))) refresh(); });
         el.querySelectorAll("[data-del]").forEach(b => b.onclick = async () => { if (await ask("Supprimer ce message ?") && await act(() => Store.remove("contacts", b.dataset.del), "Message supprimé.")) refresh(); });
       },
 
       /* ---------------- Journal ---------------- */
       journal(el) {
-        const list = Store.list("journal").slice().sort((a, b) => b.date.localeCompare(a.date));
-        el.innerHTML = `<div class="card"><h2>Journal d'activité <button class="btn btn-line btn-sm" id="exp">${ICONS.dl} Export</button></h2><p style="color:var(--muted);font-size:.88rem;margin-bottom:1rem">Chaque action importante est horodatée et signée : une réponse directe au besoin de traçabilité soulevé par les audits des ressources humaines et des contrats.</p>
-          ${tbl(["Date","Agent","Action","Détail"], list.slice(0, 300).map(j => `<tr><td style="white-space:nowrap">${dtime(j.date)}</td><td>${esc(j.user)}</td><td><b>${esc(j.action)}</b></td><td>${esc(j.detail)}</td></tr>`), "Aucune activité enregistrée")}</div>`;
+        const f = F.jn || (F.jn = {q:"", user:""}), allJ = Store.list("journal").slice().sort((a, b) => b.date.localeCompare(a.date)), users = [...new Set(allJ.map(j => j.user))].sort();
+        const list = allJ.filter(j => (!f.user || j.user === f.user) && (!f.q || (j.action + " " + j.detail).toLowerCase().includes((f.q || "").toLowerCase())));
+        el.innerHTML = `<div class="card"><h2><span>Journal d'activité <small class="sub">${list.length} entrée(s)</small></span><button class="btn btn-line btn-sm" id="exp">${ICONS.dl} Export</button></h2><p style="color:var(--muted);font-size:.88rem;margin-bottom:1rem">Chaque action importante est horodatée et signée : une réponse directe au besoin de traçabilité soulevé par les audits des ressources humaines et des contrats.</p>
+          <div class="toolbar"><div class="field"><label>Rechercher</label><input data-f="q" type="search" placeholder="Action ou détail" value="${esc(f.q || "")}"></div><div class="field"><label>Agent</label><select data-f="user"><option value="">Tous</option>${opt(users, f.user)}</select></div></div>
+          ${tbl(["Date","Agent","Action","Détail"], list.slice(0, 300).map(j => `<tr><td style="white-space:nowrap">${dtime(j.date)}</td><td>${esc(j.user)}</td><td><b>${esc(j.action)}</b></td><td>${esc(j.detail)}</td></tr>`), "Aucune activité enregistrée", resetBtn("jn"))}</div>`;
+        filterBar(null, e => { f[e.target.dataset.f] = e.target.value; route(false); }, el);
         el.querySelector("#exp").onclick = () => csv("journal-activite", ["Date","Agent","Action","Détail"], list.map(j => [dtime(j.date), j.user, j.action, j.detail]));
       },
 
@@ -603,8 +667,12 @@ const P = (() => {
             <div class="field"><label>Profil</label><select name="role">${opt(Object.entries(Store.ROLES).map(([k, r]) => [k, r.l]), "etatcivil")}</select></div>
             <div class="field"><label>Fonction (affichée)</label><input name="titre" placeholder="Ex. Agent d'état civil"></div>
             <div class="row"><div class="field"><label>Identifiant</label><input name="login" required pattern="[A-Za-z0-9._\-]{3,40}" autocomplete="off" autocapitalize="none"></div><div class="field"><label>Mot de passe</label><input name="password" type="password" required minlength="6" autocomplete="new-password"></div></div>
+            <div class="field"><label>Confirmer le mot de passe</label><input name="password2" type="password" required minlength="6" autocomplete="new-password"></div>
             <button class="btn btn-orange">${ICONS.plus} Créer le compte</button></form></div></div>`;
-        el.querySelector("#uf").onsubmit = async e => { e.preventDefault(); const d = Object.fromEntries(new FormData(e.target)); d.arr = N3; if (await act(() => Store.createUser(d), "Compte créé : " + d.login)) { Store.log("Compte créé", d.login + " · " + Store.ROLES[d.role].l); route(false); } };
+        el.querySelector("#uf").onsubmit = async e => { e.preventDefault(); const d = Object.fromEntries(new FormData(e.target)); d.arr = N3; d.login = d.login.trim();
+          if (users.some(u => u.login.toLowerCase() === d.login.toLowerCase())) return bad(e.target, "Cet identifiant existe déjà : choisissez-en un autre.", "login");
+          if (d.password !== d.password2) return bad(e.target, "Les deux mots de passe ne correspondent pas.", "password2");
+          delete d.password2; if (await act(() => Store.createUser(d), "Compte créé : " + d.login)) { Store.log("Compte créé", d.login + " · " + Store.ROLES[d.role].l); route(false); } };
         el.querySelectorAll("[data-pw]").forEach(b => b.onclick = async () => { const p = await ask("Nouveau mot de passe (6 caractères minimum)", {input:"password", min:6, ok:"Enregistrer", title:"Changer le mot de passe"}); if (p && await act(() => Store.setPassword(b.dataset.pw, p), "Mot de passe modifié.")) route(false); });
         el.querySelectorAll("[data-del]").forEach(b => b.onclick = async () => { if (await ask("Supprimer ce compte ?") && await act(() => Store.deleteUser(b.dataset.del), "Compte supprimé.")) route(false); });
       },
@@ -616,12 +684,12 @@ const P = (() => {
             <p style="color:var(--muted)">Identifiant : <b style="color:var(--navy)">${esc(me.login)}</b><br>Profil : <b style="color:var(--navy)">${esc(Store.ROLES[me.role].l)}</b><br>Mairie : <b style="color:var(--navy)">3e arrondissement de Libreville</b></p>
             ${Store.LIVE ? "" : `<button class="btn btn-line btn-sm" id="rst" style="margin-top:1rem">Réinitialiser les données de démonstration</button>`}</div>
           <div class="card"><h2>Changer mon mot de passe</h2><form class="form" id="pwf">
-            <div class="field"><label for="np1">Nouveau mot de passe</label><input id="np1" type="password" minlength="6" required autocomplete="new-password"></div>
-            <div class="field"><label for="np2">Confirmer</label><input id="np2" type="password" minlength="6" required autocomplete="new-password"></div>
+            <div class="field"><label for="np1">Nouveau mot de passe</label><input id="np1" name="np1" type="password" minlength="6" required autocomplete="new-password"></div>
+            <div class="field"><label for="np2">Confirmer</label><input id="np2" name="np2" type="password" minlength="6" required autocomplete="new-password"></div>
             <button class="btn btn-orange">${ICONS.lock} Mettre à jour</button></form></div></div>`;
         el.querySelector("#pwf").onsubmit = async e => {
           e.preventDefault(); const a = el.querySelector("#np1").value, b = el.querySelector("#np2").value;
-          if (a !== b) return toast("Les deux mots de passe ne correspondent pas.", "err");
+          if (a !== b) return bad(e.target, "Les deux mots de passe ne correspondent pas.", "np2");
           if (await act(() => Store.changePassword(a), "Mot de passe mis à jour.")) e.target.reset();
         };
         const r = el.querySelector("#rst"); if (r) r.onclick = async () => { if (await ask("Remettre toutes les données de démonstration à zéro ?")) { await Store.reset(); await Store.logout(); location.href = "espace.html"; } };
@@ -641,15 +709,16 @@ const P = (() => {
     const f = F[col] || (F[col] = {statut:"ouverts", quartier:"", q:"", type:""});
     const all = Store.list(col);
     const types = isD ? DEMARCHES.filter(d => !d.signal).map(d => [d.id, d.t]) : TYPES_SIGNAL.map(t => [t[0], t[1]]);
+    let shown = [];
     const draw = () => {
-      const list = all.filter(d => (f.statut === "ouverts" ? !/Remise|Rejetée|Résolu/.test(d.statut) : !f.statut || d.statut === f.statut) && (!f.quartier || (f.quartier === "Autres quartiers" ? !qOf(d.quartier) : qOf(d.quartier) === f.quartier)) && (!f.type || d.type === f.type) && (!f.q || (d.ref + " " + d.nom + " " + d.prenom + " " + (d.quartier || "")).toLowerCase().includes(f.q.toLowerCase())))
+      const list = shown = all.filter(d => (f.statut === "ouverts" ? !/Remise|Rejetée|Résolu/.test(d.statut) : !f.statut || d.statut === f.statut) && (!f.quartier || (f.quartier === "Autres quartiers" ? !qOf(d.quartier) : qOf(d.quartier) === f.quartier)) && (!f.type || d.type === f.type) && (!f.q || (d.ref + " " + d.nom + " " + d.prenom + " " + (d.quartier || "")).toLowerCase().includes(f.q.toLowerCase())))
         .sort((a, b) => b.date.localeCompare(a.date));
-      el.querySelector("#list").innerHTML = tbl(isD ? ["Dossier","Demandeur","Démarche","Déposé","Paiement","Statut"] : ["Réf.","Problème","Lieu","Priorité","Signalé","Statut"],
+      el.querySelector("#list").innerHTML = tbl(isD ? ["Dossier","Demandeur","Démarche","Paiement","Statut",""] : ["Réf.","Problème","Lieu","Priorité","Statut",""],
         list.map(d => isD
-          ? `<tr class="clk" data-id="${d.id}"><td><b>${d.ref}</b></td><td>${esc(d.prenom)} ${esc(d.nom)}<br><small style="color:var(--muted)">${esc(d.tel)}</small></td><td>${esc(d.typeLabel)}</td><td style="white-space:nowrap">${date(d.date)}${open(d.statut) && days(d.date) > 7 ? ` <span class="chip warn">+7 j</span>` : ""}</td><td>${payChip(d)} ${acteChip(d.acte)}${(d.pj || []).length ? ` <span class="chip neu" title="Pièces jointes">📎 ${d.pj.length}</span>` : ""}</td><td>${stChip(d.statut)}</td></tr>`
-          : `<tr class="clk" data-id="${d.id}"><td><b>${d.ref}</b></td><td>${esc(d.typeLabel)}</td><td>${esc(d.quartier)}<br><small style="color:var(--muted)">${esc(d.lieu || "")}</small></td><td>${d.priorite === "Haute" ? `<span class="chip bad">Haute</span>` : `<span class="chip neu">Normale</span>`}</td><td style="white-space:nowrap">${ago(d.date)}${(d.pj || []).length ? ` <span class="chip neu">📷 ${d.pj.length}</span>` : ""}</td><td>${stChip(d.statut)}</td></tr>`), "Aucun dossier ne correspond aux filtres");
+          ? `<tr class="clk" data-id="${d.id}"><td><b>${d.ref}</b><br><small style="color:var(--muted)">${date(d.date)}${open(d.statut) && days(d.date) > 7 ? ` <span class="chip warn">+7 j</span>` : ""}</small></td><td style="white-space:nowrap">${esc(d.prenom)} ${esc(d.nom)}<br><small style="color:var(--muted)">${esc(d.tel)}</small></td><td>${esc(d.typeLabel)}</td><td>${payChip(d)} ${acteChip(d.acte)}${(d.pj || []).length ? ` <span class="chip neu" title="Pièces jointes">📎 ${d.pj.length}</span>` : ""}</td><td>${stChip(d.statut)}</td><td class="act">${nextBtn(col, d)}</td></tr>`
+          : `<tr class="clk" data-id="${d.id}"><td><b>${d.ref}</b><br><small style="color:var(--muted)">${ago(d.date)}${(d.pj || []).length ? ` · 📷 ${d.pj.length}` : ""}</small></td><td>${esc(d.typeLabel)}</td><td>${esc(d.quartier)}<br><small style="color:var(--muted)">${esc(d.lieu || "")}</small></td><td>${d.priorite === "Haute" ? `<span class="chip bad">Haute</span>` : `<span class="chip neu">Normale</span>`}</td><td>${stChip(d.statut)}</td><td class="act">${nextBtn(col, d)}</td></tr>`), "Aucun dossier ne correspond aux filtres", resetBtn(col));
       el.querySelector("#cnt").textContent = list.length + " dossier(s)";
-      el.querySelectorAll("#list [data-id]").forEach(tr => tr.onclick = () => fiche(col, tr.dataset.id));
+      el.querySelector("#list [data-reset]") && (el.querySelector("#list [data-reset]").onclick = () => { delete F[col]; saveF(); route(false); });
     };
     const open = s => !/Remise|Rejetée|Résolu|Prête/.test(s);
     const cnt = s => all.filter(d => d.statut === s).length;
@@ -660,15 +729,17 @@ const P = (() => {
       <div class="toolbar"><div class="field"><label>Rechercher</label><input data-f="q" placeholder="N° de dossier, nom, quartier" value="${esc(f.q)}"></div><div class="field"><label>Statut</label><select data-f="statut">${opt([["ouverts","En cours (non clos)"],["","Tous"], ...STS], f.statut)}</select></div><div class="field"><label>Type</label><select data-f="type"><option value="">Tous</option>${opt(types, f.type)}</select></div><div class="field"><label>Quartier</label><select data-f="quartier"><option value="">Tous</option>${opt(QS.concat(["Autres quartiers"]), f.quartier)}</select></div></div>
       <div id="list"></div></div>`;
     filterBar(null, e => { f[e.target.dataset.f] = e.target.value; draw(); }, el);
-    el.querySelector("#exp").onclick = () => csv(col, ["Référence","Type","Nom","Prénom","Téléphone","Quartier","Date","Statut"], all.map(d => [d.ref, d.typeLabel, d.nom, d.prenom, d.tel, d.quartier, date(d.date), d.statut]));
+    el.querySelector("#list").addEventListener("click", e => { const q = e.target.closest("[data-q]"); if (q) { q.disabled = true; const [c, id, st] = q.dataset.q.split("|"); return quickStatus(c, id, st); } const tr = e.target.closest("[data-id]"); if (tr) fiche(col, tr.dataset.id); });
+    el.querySelector("#exp").onclick = () => csv(col + (shown.length === all.length ? "" : "-filtre"), ["Référence","Type","Nom","Prénom","Téléphone","Quartier","Date","Statut"], shown.map(d => [d.ref, d.typeLabel, d.nom, d.prenom, d.tel, d.quartier, date(d.date), d.statut]));
     const nb = el.querySelector("#new");
     if (nb) nb.onclick = () => {
       modal("Enregistrer une demande au guichet", `<form class="form" id="gf"><div class="field"><label>Démarche</label><select name="type">${opt(types)}</select></div>
         <div class="row"><div class="field"><label>Prénom</label><input name="prenom" required></div><div class="field"><label>Nom</label><input name="nom" required></div></div>
-        <div class="row"><div class="field"><label>Téléphone</label><input name="tel" type="tel" inputmode="tel" required></div><div class="field"><label>Quartier</label><select name="quartier" required>${opt(QS.concat(["Autre quartier"]))}</select></div></div>
+        <div class="row"><div class="field"><label>Téléphone</label><input name="tel" type="tel" inputmode="tel" required autocomplete="off" placeholder="Ex. 077 12 34 56"></div><div class="field"><label>Quartier</label><select name="quartier" required>${opt(QS.concat(["Autre quartier"]))}</select></div></div>
         <div class="field"><label>Précisions</label><textarea name="details" style="min-height:80px"></textarea></div><button class="btn btn-orange">${ICONS.save} Enregistrer et remettre le numéro</button></form>`);
       document.getElementById("gf").onsubmit = async e => {
         e.preventDefault(); const d = Object.fromEntries(new FormData(e.target)), dm = DEMARCHES.find(x => x.id === d.type);
+        d.prenom = d.prenom.trim(); d.nom = d.nom.trim(); if (!TEL_RE.test(d.tel.trim())) return bad(e.target, "Numéro de téléphone invalide : saisissez au moins 8 chiffres (ex. 077 12 34 56).", "tel");
         const ref = await act(() => Store.submitDemande({...d, arr:N3, typeLabel:dm.t, service:dm.service, email:"", montant:dm.prix || 0, paiement:dm.prix ? {choix:"guichet", statut:"À régler"} : {statut:"Gratuit"}, pj:[], document:null}));
         if (ref) { await Store.init(); Store.log("Demande au guichet", ref + " · " + dm.t); refresh(); modal("Demande enregistrée", `<p class="lead-p">Numéro à remettre à l'usager :</p><div class="refbig" style="text-align:center;margin:1rem 0">${ref}</div><p style="color:var(--muted)">L'usager peut suivre l'avancement sur le site, rubrique « Suivre mon dossier ».</p>`); }
       };
@@ -709,10 +780,23 @@ const P = (() => {
     ? `<div class="auth-badge ok"><span class="shield">${ICONS.shieldok}</span><span><b>${esc(typeDocL(a.type))} n° ${esc(a.numAff || a.num)} — authentifié</b><small>Original déjà vérifié${a.authDate ? " le " + date(a.authDate) : ""} : ne pas le redemander. Traiter en ligne ; l'usager passe seulement récupérer.</small></span></div>`
     : `<div class="auth-badge ${a.statut === "Rejeté" ? "bad" : "wait"}"><span class="shield">${ICONS.shield}</span><span><b>${esc(typeDocL(a.type))} n° ${esc(a.numAff || a.num)} — ${a.statut === "Rejeté" ? "non conforme" : "à authentifier"}</b><small>Exiger l'original lors du passage au guichet, puis l'authentifier : il ne sera plus jamais demandé.</small></span><button type="button" class="btn btn-orange btn-sm" id="goauth">${ICONS.shieldok} Authentifier</button></div>`;
 
+  /* Statut suivant en 1 clic (liste, tableau de bord) */
+  const NEXT = {demandes:{"Nouvelle":["En traitement","Prendre en charge"],"En traitement":["Prête","Marquer prête"],"Pièce manquante":["En traitement","Reprendre"],"Prête":["Remise","Remis à l'usager"]}, signalements:{"Nouveau":["Pris en charge","Prendre en charge"],"Pris en charge":["En intervention","Équipe sur place"],"En intervention":["Résolu","Marquer résolu"]}};
+  const nextBtn = (col, d) => { const n = d.type === "rdv" ? null : (NEXT[col] || {})[d.statut]; return n ? `<button type="button" class="btn btn-orange btn-sm" data-q="${col}|${d.id}|${esc(n[0])}">${n[1]}</button>` : ""; };
+  const noteFor = (d, dem, st) => ({"En traitement":`Dossier pris en charge par le service ${d.service || "technique"}.`, "Pièce manquante":"Merci de fournir : ", "Prête":dem.doc ? "Votre document est prêt : téléchargez-le en ligne depuis « Suivre mon dossier » ou retirez-le au guichet." : "Votre dossier est prêt : présentez-vous au guichet avec votre pièce d'identité.", "Remise":"Document remis au demandeur.", "Rejetée":"", "Pris en charge":"Équipe des services techniques informée.", "En intervention":"Équipe sur place.", "Résolu":"Intervention terminée. Merci pour votre signalement."})[st];
+  async function quickStatus(col, id, st) {
+    const d = Store.db()[col].find(x => x.id === id); if (!d) return;
+    const isD = col === "demandes", dem = isD ? DEMARCHES.find(x => x.id === d.type) || {} : {};
+    const h = d.historique.concat([{date:new Date().toISOString(), statut:st, note:noteFor(d, dem, st) || "Statut mis à jour.", pub:true, by:me.prenom + " " + me.nom}]);
+    const patch = {statut:st, historique:h}; if (isD && dem.doc && st === "Prête" && !d.document) patch.document = {type:"auto", date:new Date().toISOString()};
+    if (await act(() => Store.update(col, id, patch), d.ref + " : " + st.toLowerCase() + ".")) { Store.log(isD ? "Demande traitée" : "Signalement traité", d.ref + " → " + st); refresh(); }
+    else route(false);
+  }
+
   function fiche(col, id) {
     const d = Store.db()[col].find(x => x.id === id); if (!d) return;
     const isD = col === "demandes", STS = Store.STATUTS[col], dem = isD ? DEMARCHES.find(x => x.id === d.type) || {} : {};
-    const nextNote = {"En traitement":`Dossier pris en charge par le service ${d.service || "technique"}.`, "Pièce manquante":"Merci de fournir : ", "Prête":dem.doc ? "Votre document est prêt : téléchargez-le en ligne depuis « Suivre mon dossier » ou retirez-le au guichet." : "Votre dossier est prêt : présentez-vous au guichet avec votre pièce d'identité.", "Remise":"Document remis au demandeur.", "Rejetée":"", "Pris en charge":"Équipe des services techniques informée.", "En intervention":"Équipe sur place.", "Résolu":"Intervention terminée. Merci pour votre signalement."};
+    const nextNote = new Proxy({}, {get:(_, st) => noteFor(d, dem, st)});
     const p = d.paiement || {};
     const payBox = !isD ? "" : !d.montant ? `<div class="sbox"><div><b>${ICONS.check} Démarche gratuite</b></div></div>`
       : p.statut === "Payé" ? `<div class="sbox ok"><div><b>${ICONS.check} Payé : ${money(d.montant)}</b><small>${esc(p.mode)} · ${dtime(p.date)} · quittance ${esc(p.quittance)}${p.transaction ? " · transaction " + esc(p.transaction) : ""}</small></div><button class="btn btn-line btn-sm" id="frecu">${ICONS.dl} Reçu</button></div>`
@@ -739,6 +823,8 @@ const P = (() => {
     fm.statut.onchange = setNote; if (fm.statut.value === d.statut) fm.note.value = "";
     fm.onsubmit = async e => {
       e.preventDefault(); const v = Object.fromEntries(new FormData(fm));
+      if (!v.note.trim()) return bad(fm, "Écrivez un message ou une note pour expliquer ce changement.", "note");
+      if (v.statut === "Pièce manquante" && v.note.trim().length < 22) return bad(fm, "Précisez la ou les pièces à fournir.", "note");
       const h = d.historique.concat([{date:new Date().toISOString(), statut:v.statut, note:v.note, pub:!!v.pub, by:me.prenom + " " + me.nom}]);
       const patch = {statut:v.statut, historique:h}; if (v.priorite) patch.priorite = v.priorite;
       if (isD && dem.doc && v.statut === "Prête" && !d.document) patch.document = {type:"auto", date:new Date().toISOString()};

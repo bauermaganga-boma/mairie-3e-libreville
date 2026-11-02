@@ -90,20 +90,20 @@ body[data-page="portal"] .modal .x{width:40px;height:40px}
 .tbl tr.clk:hover td{background:#f3f9fa}
 @media (max-width:760px){
   .tbl-wrap{border:0;overflow:visible}
-  table.tbl.cards{min-width:0;display:block}
-  .tbl.cards thead{display:none}
-  .tbl.cards tbody{display:grid;grid-template-columns:minmax(0,1fr);gap:.7rem;width:100%}
-  .tbl.cards tr{min-width:0;max-width:100%}
-  .tbl.cards tr{display:block;background:#fff;border:1px solid var(--line);border-radius:14px;padding:.3rem .9rem;box-shadow:0 1px 0 rgba(6,54,63,.04)}
-  .tbl.cards tr.clk:active{background:#f3f9fa}
-  .tbl.cards td{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;border:0;border-bottom:1px dashed var(--line);padding:.55rem 0;text-align:right;white-space:normal!important;background:none!important}
-  .tbl.cards td:last-child{border-bottom:0}
-  .tbl.cards td::before{content:attr(data-l);flex:none;max-width:40%;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700;text-align:left;padding-top:.2rem}
-  .tbl.cards td:not([data-l]){justify-content:flex-end}
-  .tbl.cards td:not([data-l])::before{content:none}
-  .tbl.cards td:empty{display:none}
-  .tbl.cards td .prog{min-width:90px}
-  .bo-grid .tbl.cards td::before,.hist{font-size:.82rem}
+  table.tbl.rc{min-width:0;display:block}
+  .tbl.rc thead{display:none}
+  .tbl.rc tbody{display:grid;grid-template-columns:minmax(0,1fr);gap:.7rem;width:100%}
+  .tbl.rc tr{min-width:0;max-width:100%}
+  .tbl.rc tr{display:block;background:#fff;border:1px solid var(--line);border-radius:14px;padding:.3rem .9rem;box-shadow:0 1px 0 rgba(6,54,63,.04)}
+  .tbl.rc tr.clk:active{background:#f3f9fa}
+  .tbl.rc td{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;border:0;border-bottom:1px dashed var(--line);padding:.55rem 0;text-align:right;white-space:normal!important;background:none!important}
+  .tbl.rc td:last-child{border-bottom:0}
+  .tbl.rc td::before{content:attr(data-l);flex:none;max-width:40%;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700;text-align:left;padding-top:.2rem}
+  .tbl.rc td:not([data-l]){justify-content:flex-end}
+  .tbl.rc td:not([data-l])::before{content:none}
+  .tbl.rc td:empty{display:none}
+  .tbl.rc td .prog{min-width:90px}
+  .bo-grid .tbl.rc td::before,.hist{font-size:.82rem}
 }
 
 /* ---------- Boîtes de dialogue (confirmation / saisie) ---------- */
@@ -137,5 +137,160 @@ body[data-page="portal"] .app{grid-template-columns:260px minmax(0,1fr)}
 @media (max-width:900px){body[data-page="portal"] .app{grid-template-columns:minmax(0,1fr)}}
 body[data-page="portal"] .app-main,body[data-page="portal"] .card,body[data-page="portal"] .bo-grid>*,body[data-page="portal"] .cols>*{min-width:0}
 @media (min-width:761px){.tbl td:first-child>b{white-space:nowrap}}
-@media (max-width:760px){.tbl.cards td{flex-wrap:wrap;row-gap:.2rem}.tbl.cards td>.chip,.tbl.cards td>small{margin-left:auto}}
+@media (max-width:760px){.tbl.rc td{flex-wrap:wrap;row-gap:.2rem}.tbl.rc td>.chip,.tbl.rc td>small{margin-left:auto}}
 @media (max-width:900px){body[data-page="portal"] .app-main{overflow-x:clip}}
+
+/* =========================================================
+   Passe 2 — design : aéré, tuiles lisibles, tableaux denses mais propres
+   ========================================================= */
+body[data-page="portal"]{background:var(--bg)}
+body[data-page="portal"] .app-main{padding:0 2rem 3rem}
+body[data-page="portal"] .app-top{margin:0 -2rem 1.6rem;padding:.8rem 2rem}
+body[data-page="portal"] .app-top h1{font-size:1.4rem;letter-spacing:-.01em}
+body[data-page="portal"] .card{padding:1.5rem;border-radius:18px;box-shadow:0 1px 2px rgba(6,54,63,.04),0 14px 30px -26px rgba(6,54,63,.45);margin-bottom:1.3rem}
+body[data-page="portal"] .card h2{font-size:1.08rem;margin-bottom:1.1rem;padding-bottom:.9rem;border-bottom:1px solid var(--line)}
+body[data-page="portal"] .card h2>span:first-child{display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap}
+body[data-page="portal"] .bo-grid{gap:1.3rem}
+body[data-page="portal"] .bo-grid>.card{margin-bottom:0}
+.bo-grid.wide{grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));margin-bottom:1.3rem}
+.bo-grid.wide:empty{display:none}
+
+/* Bandeau d'accueil : teal -> or */
+.hello{position:relative;overflow:hidden;padding:1.5rem 1.7rem;border-radius:20px;flex-wrap:wrap;box-shadow:0 18px 36px -26px rgba(6,54,63,.9)}
+.hello::after{content:"";position:absolute;right:-60px;top:-70px;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,rgba(245,179,1,.38),rgba(245,179,1,0) 68%);pointer-events:none}
+.hello>*{position:relative;z-index:1}
+.hello h2{font-size:1.5rem}
+.hello-act{display:flex;gap:.5rem;flex-wrap:wrap}
+.hello-act a{display:inline-flex;align-items:center;min-height:42px;padding:0 1rem;border-radius:99px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28);color:#fff;font-weight:700;font-size:.84rem;transition:.2s}
+.hello-act a:hover{background:var(--gold);border-color:var(--gold);color:#3d2c00}
+
+/* Tuiles d'indicateurs */
+body[data-page="portal"] .kpis{gap:1.1rem;margin-bottom:1.5rem}
+body[data-page="portal"] .kpi{position:relative;padding:1.25rem 1.3rem;border-radius:18px;box-shadow:0 1px 2px rgba(6,54,63,.04),0 14px 30px -28px rgba(6,54,63,.5);transition:.2s;text-decoration:none}
+body[data-page="portal"] .kpi b{font-size:1.75rem;letter-spacing:-.02em}
+body[data-page="portal"] .kpi>span:last-child>span{display:block;margin-top:.25rem;font-size:.8rem;line-height:1.35}
+a.kpi.lnk:hover{transform:translateY(-2px);border-color:var(--sky);box-shadow:0 16px 28px -22px rgba(6,54,63,.7)}
+a.kpi.lnk:focus-visible{outline:3px solid #0e7c86;outline-offset:2px}
+.todo{border-radius:16px}
+
+/* Files de travail (tableau de bord par rôle) */
+.card.bo-queue{border-top:4px solid var(--orange)}
+.wl{display:grid;gap:.5rem}
+.wl-row{display:flex;align-items:center;justify-content:space-between;gap:.8rem;padding:.7rem .9rem;border-radius:12px;background:var(--bg);border:1px solid transparent;color:inherit;cursor:pointer;transition:.15s;text-decoration:none}
+.wl-row:hover{background:#eef8f9;border-color:#bfe3e6}
+.wl-row:focus-visible{outline:3px solid #0e7c86;outline-offset:1px}
+.wl-main{min-width:0;display:block;color:var(--navy);font-size:.92rem}
+.wl-main small{display:block;color:var(--muted);font-size:.78rem;margin-top:.15rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wl-row .btn{flex:none}
+.wl-more{margin-top:.8rem;text-align:center;font-weight:700;font-size:.88rem}
+.wl-more a{color:var(--orange)}
+.alert-box{text-decoration:none;transition:.15s}
+a.alert-box:hover{filter:brightness(.97);transform:translateX(2px)}
+.card .empty{padding:1.6rem 1rem}
+.empty p{max-width:36ch;margin:0 auto}
+
+/* Tableaux : denses mais propres */
+.tbl-wrap{border-radius:14px;background:#fff}
+.tbl th{position:sticky;top:0;padding:.7rem .9rem;background:#f1f6f9;border-bottom:1px solid var(--line)}
+.tbl td{padding:.6rem .9rem;font-size:.9rem}
+.tbl tbody tr:nth-child(even) td{background:#fbfdfe}
+.tbl tr.clk:hover td{background:#eef8f9!important}
+.tbl td.act{text-align:right;white-space:nowrap;width:1%}
+.tbl td small{font-size:.76rem}
+.toolbar{padding:.9rem;background:var(--bg);border-radius:14px;margin-bottom:1.1rem;gap:.8rem}
+.toolbar .field label{font-size:.74rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.3rem}
+.toolbar .field input,.toolbar .field select{min-height:44px;background:#fff}
+.chip{font-weight:700}
+.chip.info{background:var(--sky-2);color:#0b5f68}
+.mini-btns .btn{min-height:40px}
+.btn-sm{min-height:40px}
+.field input:invalid:not(:placeholder-shown):not(:focus),.field input.bad{border-color:var(--bad);background:#fff7f7}
+.field .hint{display:block;font-size:.76rem;color:var(--muted);margin-top:.3rem}
+.field .hint.bad{color:var(--bad);font-weight:600}
+.form-err{display:none;padding:.7rem .9rem;border-radius:10px;background:#fdecec;color:#8a1c1c;font-size:.86rem;font-weight:600}
+.form-err.on{display:block}
+.tools{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-bottom:.9rem}
+.tools .btn{min-height:40px}
+.seg{display:inline-flex;gap:.3rem;flex-wrap:wrap}
+.seg button{min-height:40px;padding:0 .9rem;border-radius:99px;border:1px solid var(--line);background:#fff;font-weight:700;font-size:.82rem;color:var(--navy);cursor:pointer;font-family:inherit}
+.seg button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.sumrow{display:flex;justify-content:flex-end;gap:1rem;padding:.8rem .9rem 0;font-weight:700;color:var(--navy)}
+.sumrow b{font-family:var(--font-h)}
+
+/* Graphiques simples */
+.bars.flat{height:190px}
+.hbars .r{grid-template-columns:minmax(90px,170px) 1fr minmax(60px,100px)}
+.prog{height:9px}
+
+/* Connexion */
+.auth .box h1{font-size:1.7rem}
+.auth .box .role-sw{margin:1.2rem 0}
+.login-err{display:none;margin-top:.2rem;padding:.75rem .9rem;border-radius:12px;background:#fdecec;color:#8a1c1c;font-size:.9rem;font-weight:600}
+.login-err.on{display:block}
+.again{display:none;margin:1rem 0;padding:.9rem 1rem;border-radius:14px;background:#e6f7ec;color:#14532d;font-size:.9rem;align-items:center;justify-content:space-between;gap:.8rem;flex-wrap:wrap}
+.again.on{display:flex}
+.again a{font-weight:800;color:var(--navy);text-decoration:underline}
+
+/* ---------- Mobile ---------- */
+@media (max-width:900px){
+  body[data-page="portal"] .app-main{padding:0 1rem 6.5rem}
+  body[data-page="portal"] .app-top{margin:0 -1rem 1rem;padding:.55rem 1rem}
+  body[data-page="portal"] .app-top p{display:none}
+  body[data-page="portal"] .tbtn,body[data-page="portal"] .sb-toggle{min-width:44px;min-height:44px;height:44px}
+  body[data-page="portal"] .sb-toggle{width:44px}
+  .bnav a,.bnav button{min-height:56px}
+  .sidebar a,.sidebar button.lnk{min-height:48px}
+  .sidebar{width:min(300px,86vw)}
+}
+@media (max-width:760px){
+  body[data-page="portal"] .btn,body[data-page="portal"] .btn-sm,.mini-btns .btn,.tools .btn,.seg button{min-height:44px}
+  body[data-page="portal"] .toolbar{padding:.7rem}
+  body[data-page="portal"] .toolbar .field input,body[data-page="portal"] .toolbar .field select{min-height:48px;font-size:16px}
+  .hello{padding:1.1rem 1.1rem 1rem;border-radius:16px}
+  .hello h2{font-size:1.2rem}
+  .hello-act{width:100%}
+  .hello-act a{flex:1 1 auto;justify-content:center}
+  body[data-page="portal"] .card{padding:1rem;border-radius:16px}
+  body[data-page="portal"] .card h2{font-size:1rem;padding-bottom:.7rem;margin-bottom:.8rem}
+  .bo-grid.wide{grid-template-columns:minmax(0,1fr)}
+  .wl-row{flex-wrap:wrap;padding:.75rem}
+  .wl-main{flex:1 1 100%}
+  .wl-main small{white-space:normal}
+  .wl-row .btn{width:100%;justify-content:center}
+  .tbl.rc td.act{width:auto;justify-content:stretch;padding:.7rem 0 .5rem}
+  .tbl.rc td.act .btn{width:100%;justify-content:center}
+  .tbl.rc td.act::before{content:none}
+  .tbl.rc .mini-btns{width:100%}
+  .tbl.rc .mini-btns .btn{flex:1 1 auto;justify-content:center}
+  .tbl.rc td .prog{min-width:0;flex:1}
+  .sumrow{justify-content:space-between}
+  .modal .box .mb input,.modal .box .mb select,.modal .box .mb textarea{font-size:16px}
+  .modal .box .mb .btn{min-height:48px}
+  .field input[type=checkbox]{width:22px;height:22px}
+  .seg{width:100%}
+  .seg button{flex:1 1 auto}
+}
+@media (max-width:420px){
+  body[data-page="portal"] .kpis{grid-template-columns:1fr 1fr}
+  body[data-page="portal"] .kpi{flex-direction:column;align-items:flex-start;gap:.6rem}
+  body[data-page="portal"] .kpi b{font-size:1.4rem}
+  .hbars .r{grid-template-columns:84px 1fr 64px}
+}
+
+/* ---------- Impression ---------- */
+@media print{
+  .sidebar,.bnav,.hello-act,.toolbar,.tools,.mini-btns,.btn,.sb-toggle,#vback,.top-actions,.skip,.toast{display:none!important}
+  body,body[data-page="portal"]{background:#fff}
+  body[data-page="portal"] .app{display:block}
+  body[data-page="portal"] .app-main{padding:0}
+  body[data-page="portal"] .app-top{position:static;margin:0 0 1rem;padding:0;border:0;background:none}
+  body[data-page="portal"] .card,.kpi{box-shadow:none;break-inside:avoid}
+  .tbl th{position:static}
+  .modal.on{position:static;display:block;background:none;padding:0;backdrop-filter:none}
+  .modal .box{max-height:none;box-shadow:none;border-radius:0;overflow:visible}
+}
+.wl,.wl-row,.bo-grid.wide>*{min-width:0}
+.wl-main{flex:1 1 auto;overflow:hidden}
+.bo-grid table.tbl,.bo-grid.wide table.tbl{min-width:0}
+.bo-grid .tbl td,.bo-grid .tbl th{padding-left:.7rem;padding-right:.7rem}
+@media (max-width:520px){body[data-page="portal"] .top-actions a.tbtn{display:none}body[data-page="portal"] .app-top h1{font-size:1.05rem}}

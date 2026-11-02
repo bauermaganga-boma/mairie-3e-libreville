@@ -247,7 +247,7 @@ function renderChrome() {
   <footer class="footer"><div class="wrap"><div class="grid">
     <div>
       <a class="logo-w" href="index.html"><img src="assets/img/logo-3e.svg" alt="Mairie du 3e arrondissement"><span>Mairie du 3<sup>e</sup><br>arrondissement</span></a>
-      <p>La mairie d'arrondissement du 3e, au cœur de Libreville : Mont-Bouët, Petit-Paris, Akébé, Sorbonne et Nombakélé-Nord. Placée sous la coordination de la mairie centrale de Libreville${C.maire ? ", dirigée par " + escH(C.maire) : ""}.</p>
+      <p>La mairie d'arrondissement du 3e, au cœur de Libreville : Mont-Bouët, Petit-Paris, Akébé, Sorbonne et Nombakélé-Nord. Placée sous la coordination de la mairie centrale de Libreville${C.maire ? ", et animée au quotidien par son maire, Franck Ibouili" : ""}.</p>
       <div class="socials">
         ${MAIRIE.facebook ? `<a href="${MAIRIE.facebook}" target="_blank" rel="noopener" aria-label="Facebook de la mairie">${ICONS.fb}</a>` : ""}
         ${MAIRIE.whatsapp ? `<a href="https://wa.me/${MAIRIE.whatsapp}" target="_blank" rel="noopener" aria-label="WhatsApp">${ICONS.wa}</a>` : ""}

@@ -35,9 +35,11 @@
         <button type="button" data-role="services" role="tab" aria-selected="false">Services</button>
         <button type="button" data-role="recettes" role="tab" aria-selected="false">Recettes</button>
       </div>
-      <form class="form" id="login-form">
-        <div class="field"><label for="login">Identifiant</label><input id="login" name="login" required autocomplete="username" autocapitalize="none" spellcheck="false"></div>
+      <div class="again" id="again" role="status"><span>Vous êtes déjà connecté<b id="again-n"></b>.</span><a href="agents.html">Continuer vers le back-office →</a></div>
+      <form class="form" id="login-form" novalidate>
+        <div class="field"><label for="login">Identifiant</label><input id="login" name="login" required autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" aria-describedby="login-err"></div>
         <div class="field"><label for="pwd">Mot de passe</label><span class="pwd-wrap"><input id="pwd" name="pwd" type="password" required autocomplete="current-password"><button type="button" class="pwd-eye" id="pwd-eye" aria-label="Afficher le mot de passe" aria-pressed="false">Afficher</button></span></div>
+        <div class="login-err" id="login-err" role="alert"></div>
         <button class="btn btn-navy" type="submit" style="justify-content:center">Se connecter</button>
       </form>
       <div class="demo" id="demo"></div>
@@ -76,16 +78,24 @@
   document.getElementById("demo").addEventListener("click", e => { const c = e.target.closest("[data-l]"); if (!c) return; document.getElementById("login").value = c.dataset.l; document.getElementById("pwd").value = c.dataset.p; document.getElementById("login-form").requestSubmit(); });
   document.getElementById("login-form").addEventListener("submit", async e => {
     e.preventDefault();
-    const btn = e.target.querySelector("button"); btn.disabled = true; btn.textContent = "Connexion…";
-    let u = null;
-    try { u = await Store.login(e.target.login.value, e.target.pwd.value); } catch (err) { toast("Connexion au serveur impossible.", "err"); }
+    const btn = e.target.querySelector("button[type=submit]"), er = document.getElementById("login-err"), li = e.target.login, pw = e.target.pwd;
+    const fail = (m, f) => { er.textContent = m; er.classList.add("on"); toast(m, "err"); if (f) f.focus(); };
+    er.classList.remove("on");
+    if (!li.value.trim()) return fail("Saisissez votre identifiant.", li);
+    if (!pw.value) return fail("Saisissez votre mot de passe.", pw);
+    btn.disabled = true; btn.textContent = "Connexion…";
+    let u = null, down = false;
+    try { u = await Store.login(li.value.trim(), pw.value); } catch (err) { down = true; }
     btn.disabled = false; btn.textContent = "Se connecter";
-    if (!u) return toast("Identifiant ou mot de passe incorrect.", "err");
+    if (down) return fail("Connexion au serveur impossible : vérifiez votre connexion internet puis réessayez.");
+    if (!u) { pw.value = ""; return fail("Identifiant ou mot de passe incorrect. Vérifiez la saisie (attention aux majuscules).", pw); }
     toast(`Bienvenue — ${u.titre || u.prenom} !`, "ok");
     setTimeout(() => location.href = "agents.html", 500);
   });
   document.getElementById("pwd-eye").onclick = ev => { const i = document.getElementById("pwd"), sh = i.type === "password"; i.type = sh ? "text" : "password"; ev.currentTarget.textContent = sh ? "Masquer" : "Afficher"; ev.currentTarget.setAttribute("aria-pressed", sh); ev.currentTarget.setAttribute("aria-label", sh ? "Masquer le mot de passe" : "Afficher le mot de passe"); };
   set(role);
+  document.querySelectorAll("#login,#pwd").forEach(i => i.addEventListener("input", () => document.getElementById("login-err").classList.remove("on")));
+  try { Promise.resolve(Store.init()).then(u => { if (u) { document.getElementById("again-n").textContent = " en tant que " + (u.prenom + " " + u.nom).trim(); document.getElementById("again").classList.add("on"); } }).catch(() => {}); } catch (e) {}
   const P = new URLSearchParams(location.search), E = (typeof ESPACES !== "undefined" ? ESPACES : []).find(x => x.role === role);
   if (P.get("demo") === "1" && E && (window.ESM_CONFIG || {}).showDemo !== false) {
     document.getElementById("login").value = E.demo.login; document.getElementById("pwd").value = E.demo.pwd;
