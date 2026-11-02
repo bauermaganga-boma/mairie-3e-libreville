@@ -1277,3 +1277,12 @@ body.ov-open .wa,body.ov-open .totop,body.nav-open .wa,body.nav-open .totop{disp
 .mairecard .seal{width:150px;right:-10px;top:-6px}
 .mairecard small{bottom:auto;top:.8rem}
 @media (min-width:1021px) and (max-width:1420px){.hback span{display:none}.hback{padding:0 .7rem;margin-right:.2rem}.nav a{padding:.5rem .42rem;font-size:.82rem}.brand img{height:48px}.brand b{font-size:.84rem}.header .wrap{gap:.5rem}}
+
+/* Mise en avant du maire du 3e */
+.hero-maire{display:inline-flex;align-items:center;gap:.8rem;margin:.9rem 0 1.1rem;padding:.55rem 1.1rem .55rem .6rem;border-radius:999px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);backdrop-filter:blur(6px);color:#fff;transition:.25s}
+.hero-maire:hover{background:rgba(255,255,255,.24)}
+.hero-maire .mono{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:var(--gold);color:#3d2c00;font-family:var(--font-h);font-weight:900}
+.hero-maire small{display:block;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:#cdeef0}
+.hero-maire b{display:block;font-family:var(--font-h);font-size:1.05rem;line-height:1.1}
+.hero-maire em{display:block;font-style:normal;font-size:.8rem;color:var(--gold)}
+.maire-sec{padding-bottom:3rem}
