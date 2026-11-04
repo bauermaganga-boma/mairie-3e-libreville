@@ -1442,3 +1442,19 @@ section.bg-white{background:linear-gradient(180deg,#fff,#fbfdfe)}
 .exec .av-photo{width:56px;height:56px;border-radius:50%;object-fit:cover;object-position:center 20%;flex:none}
 /* Pastilles rondes : recadrage sur le visage du maire */
 .mteam .mt.lead img,.hero-maire img.mono,.exec .av-photo{object-fit:cover;object-position:50% 50%;object-view-box:inset(26% 22% 44% 22%)}
+
+/* Mobile : photos du maire */
+@media (max-width:760px){
+  .mairecard.has-photo{aspect-ratio:4/5;max-width:none;width:100%;border-width:3px;border-radius:20px}
+  .mairecard.has-photo .portrait{object-position:center 12%}
+  .maire-sec .ph .badge,.mot .ph .badge{left:auto;right:12px;bottom:12px;max-width:78%;padding:.7rem .9rem}
+  .maire-fig{margin-inline:-4px;border-radius:16px}
+  .maire-fig img{aspect-ratio:4/3;max-height:none;height:auto;object-position:46% 6%}
+  .maire-fig figcaption{font-size:.78rem;padding:.65rem .9rem}
+  .mteam .mt{flex-basis:100%}
+  .mteam .mt.lead{order:-1}
+}
+@media (max-width:380px){
+  .hero-maire b{font-size:1rem}
+  .mairecard.has-photo{aspect-ratio:1/1.15}
+}

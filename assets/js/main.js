@@ -826,9 +826,9 @@ function init3A() {
 function initExec() {
   const ini = n => n.split(" ").filter(Boolean).map(x => x[0]).slice(0, 2).join("");
   const c = $("#exec-c"), ex = (MAIRIE.centrale || {}).executif;
-  if (c && ex) c.innerHTML = ex.map((p, k) => `<div class="p ${k ? "" : "lead"} rv d${k % 3}">${k ? `<span class="av">${ini(p.nom)}</span>` : `<img class="av av-photo" src="assets/img/maire-3e.png" alt="" width="56" height="56">`}<span><b>${p.nom}</b><small>${p.r}</small>${p.d ? `<em>${p.d}</em>` : ""}</span></div>`).join("");
+  if (c && ex) c.innerHTML = ex.map((p, k) => `<div class="p ${k ? "" : "lead"} rv d${k % 3}"><span class="av">${ini(p.nom)}</span><span><b>${p.nom}</b><small>${p.r}</small>${p.d ? `<em>${p.d}</em>` : ""}</span></div>`).join("");
   const b = $("#exec"); if (!b) return;
-  b.innerHTML = EXECUTIF.map((p, k) => `<div class="p ${k ? "" : "lead"} rv d${k % 3}"><span class="av">${ini(p.nom)}</span><span><b>${p.nom}</b><small>${p.r}</small>${p.d ? `<em>${p.d}</em>` : ""}</span></div>`).join("");
+  b.innerHTML = EXECUTIF.map((p, k) => `<div class="p ${k ? "" : "lead"} rv d${k % 3}">${k ? `<span class="av">${ini(p.nom)}</span>` : `<img class="av av-photo" src="assets/img/maire-3e.png" alt="" width="56" height="56">`}<span><b>${p.nom}</b><small>${p.r}</small>${p.d ? `<em>${p.d}</em>` : ""}</span></div>`).join("");
 }
 
 /* ---------- Schéma des quartiers du 3e + « Dans quel quartier j'habite ? » ---------- */
