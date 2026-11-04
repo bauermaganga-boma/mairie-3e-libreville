@@ -1424,3 +1424,21 @@ section.bg-white{background:linear-gradient(180deg,#fff,#fbfdfe)}
 }
 .page-hero .crumbs{margin-bottom:1rem}
 @media (min-width:1021px){.header .wrap{justify-content:flex-start}.header .nav{margin-left:auto}}
+
+/* Photos officielles du maire du 3e */
+.mairecard.has-photo{aspect-ratio:3/4;max-width:420px;margin-inline:auto;display:block;background:var(--navy);border:4px solid #fff;box-shadow:0 30px 60px -20px rgba(6,54,63,.5),0 0 0 3px var(--gold)}
+.mairecard.has-photo .portrait{width:100%;height:100%;object-fit:cover;object-position:center top}
+.hero-maire img.mono{width:52px;height:52px;border-radius:50%;object-fit:cover;object-position:center 20%;background:var(--gold);box-shadow:0 0 0 3px rgba(245,179,1,.55)}
+.maire-fig{margin:2.2rem auto 0;border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow-lg);background:var(--navy);position:relative}
+.maire-fig img{width:100%;height:auto;max-height:560px;object-fit:cover;object-position:center 8%}
+.maire-fig figcaption{padding:.8rem 1.1rem;font-size:.85rem;color:#e5f5f6;background:linear-gradient(90deg,var(--navy),var(--navy-2))}
+@media (max-width:760px){.mairecard.has-photo{max-width:340px}.maire-fig{margin-top:1.4rem;border-radius:14px}.maire-fig img{max-height:360px}}
+.mteam{display:flex;flex-wrap:wrap;gap:.7rem;margin:1.2rem 0 0}
+.mteam .mt{display:flex;align-items:center;gap:.7rem;padding:.6rem .9rem .6rem .6rem;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);flex:1 1 220px}
+.mteam .mt.lead{border-color:var(--gold);background:linear-gradient(135deg,#fffaf0,#fff)}
+.mteam .mt img,.mteam .mt .av{width:48px;height:48px;border-radius:50%;object-fit:cover;object-position:center 20%;flex:none;display:grid;place-items:center;background:var(--sky-2);color:var(--navy);font-weight:800;font-family:var(--font-h);font-size:.85rem}
+.mteam .mt b{display:block;font-family:var(--font-h);color:var(--navy);font-size:.95rem;line-height:1.2}
+.mteam .mt small{display:block;color:var(--muted);font-size:.78rem}
+.exec .av-photo{width:56px;height:56px;border-radius:50%;object-fit:cover;object-position:center 20%;flex:none}
+/* Pastilles rondes : recadrage sur le visage du maire */
+.mteam .mt.lead img,.hero-maire img.mono,.exec .av-photo{object-fit:cover;object-position:50% 50%;object-view-box:inset(26% 22% 44% 22%)}
